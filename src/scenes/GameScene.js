@@ -24,7 +24,6 @@ export default class GameScene extends Phaser.Scene {
   create() {
     this.add.image(0,0,'map3').setOrigin(0,0);
     // 가운데 player 생성
-    this.monsters = this.physics.add.group();
 
     this.bullets = this.physics.add.group();
 
@@ -51,7 +50,6 @@ export default class GameScene extends Phaser.Scene {
      fill: '#ffffff'
         });
     
-    this.physics.add.overlap(this.player, this.monsters, this.handlePlayerHit, null, this);
 
   
     this.cameras.main.startFollow(this.player); // 카메라 따라가기
@@ -59,6 +57,9 @@ export default class GameScene extends Phaser.Scene {
         classType : Monster,
         runChildUpdate : true
     });
+
+    this.physics.add.overlap(this.player, this.monsters, this.handlePlayerHit, null, this);
+
 
     this.bullets = this.physics.add.group();
 

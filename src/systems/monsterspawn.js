@@ -1,10 +1,10 @@
 import Monster from '../objects/Monster.js'
 
 const monsterTable = [
-  { key: 'boojang', spawnRate: 10 },
-  { key: 'gwajang', spawnRate: 20 },
-  { key: 'file', spawnRate: 35 },
-  { key: 'bogoseo', spawnRate: 35 }
+  { key: 'boojang', spawnRate: 5 },
+  { key: 'gwajang', spawnRate: 10 },
+  { key: 'file', spawnRate: 40 },
+  { key: 'bogoseo', spawnRate: 45 }
 ];
 
 // spawnrate 별 몬스터 선택

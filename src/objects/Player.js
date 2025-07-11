@@ -1,4 +1,7 @@
+import { Coffee } from "./Weapon"
+
 // src/objects/Player.js
+
 export default class Player extends Phaser.Physics.Arcade.Sprite {
   constructor(scene, x, y) {
     super(scene, x, y, 'player')
@@ -10,10 +13,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     // ✅ 캐릭터 크기 1/4 로 줄이기
     this.setScale(0.08)
+    this.weapon = new Coffee(scene, this);
   }
 
-  update(cursors) {
+  update(time, cursors) {
     // 좌우 이동
+    this.weapon.update(time);
     if (cursors.left.isDown) {
       this.setVelocityX(-160)
       this.setFlipX(true)

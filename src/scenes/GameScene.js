@@ -56,7 +56,7 @@ export default class GameScene extends Phaser.Scene {
     this.monsters.add(monster);
 }
   update(time,delta) {
-    this.player.update(this.cursors);
+    this.player.update(time, this.cursors);
     this.monsters.children.iterate(monster => {
         if (monster && monster.update){
             monster.update();
@@ -64,6 +64,4 @@ export default class GameScene extends Phaser.Scene {
     }
     );
   }
-
-
 }

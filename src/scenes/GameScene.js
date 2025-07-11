@@ -32,6 +32,7 @@ export default class GameScene extends Phaser.Scene {
     });
 
 
+
     this.cursors = this.input.keyboard.createCursorKeys()
 
     // ✅ 화면 크기 받아와서 중앙 계산
@@ -39,7 +40,18 @@ export default class GameScene extends Phaser.Scene {
     const centerY = this.cameras.main.height / 2
 
     this.player = new Player(this, centerX, centerY)
-  
+
+    this.baseHour = 19; // 오후 7시 시작
+    this.remainingMinutes = 0;
+
+    this.statusText = this.add.text(20, 20, '', {
+     fontSize: '20px',
+     fill: '#ffffff'
+        });
+    
+    this.physics.add.overlap(this.player, this.monsters, this.handlePlayerHit, null, this);
+
+    
 
   }
 
@@ -55,6 +67,9 @@ export default class GameScene extends Phaser.Scene {
 
     this.monsters.add(monster);
 }
+
+
+
   update(time,delta) {
     this.player.update(time, this.cursors);
     this.monsters.children.iterate(monster => {
@@ -63,5 +78,34 @@ export default class GameScene extends Phaser.Scene {
         }
     }
     );
+
+    // ✅ 퇴근 시간 계산 및 표시
+    const totalMinutes = this.baseHour * 60 + this.remainingMinutes;
+    const hour = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+
+    this.statusText.setText(
+      `퇴근 시간: 오후 ${hour}시 ${minutes.toString().padStart(2, '0')}분`
+    );
+
   }
+
+
+
+
+  handlePlayerHit(player, monster) {
+  console.log('⚠️ 충돌 발생!');
+
+  this.remainingMinutes += 10; // ✅ 10분 누적!
+
+
+  // 일단 테스트용으로 몬스터 제거만 해보자
+  monster.destroy();
+
+  const totalMinutes = this.baseHour * 60 + this.remainingMinutes;
+    if (totalMinutes >= 20 * 60) {
+    this.scene.start('GameOverScene');
+  }
+  
+    }
 }

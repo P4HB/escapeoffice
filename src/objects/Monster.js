@@ -1,7 +1,7 @@
 // objects/Monster.js
 export default class Monster extends Phaser.Physics.Arcade.Sprite {
-  constructor(scene, x, y, player, type = 'normal') {
-    super(scene, x, y, 'monster');
+  constructor(scene, x, y, player, type = 'normal', textureKey = 'monster') {
+    super(scene, x, y, textureKey);
 
     this.scene = scene;
     this.player = player;
@@ -9,10 +9,10 @@ export default class Monster extends Phaser.Physics.Arcade.Sprite {
 
     scene.add.existing(this);
     scene.physics.add.existing(this);
+    this.setScale(0.1);
 
     this.setCollideWorldBounds(true);
 
-    // 기본 속성
     const monsterStats = {
       normal:  { hp: 3, speed: 50, damage: 1 },
       fast:    { hp: 2, speed: 100, damage: 1 },
@@ -24,10 +24,6 @@ export default class Monster extends Phaser.Physics.Arcade.Sprite {
     this.hp = stats.hp;
     this.speed = stats.speed;
     this.damage = stats.damage;
-
-    // 공격 쿨다운 예시 (선택)
-    this.attackCooldown = 1000; // 1초
-    this.lastAttackTime = 0;
   }
 
   update() {
@@ -44,7 +40,7 @@ export default class Monster extends Phaser.Physics.Arcade.Sprite {
   }
 
   die() {
-    this.destroy(); // 몬스터 제거
+    this.destroy();
   }
 
   tryAttack(player, currentTime) {

@@ -8,25 +8,46 @@ export default class MainScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image('player', 'assets/player.png');
-    this.load.image('monster', 'assets/monster.png');
+    this.load.image('player', '/src/assets/player.png');
+    this.load.image('boojang', '/src/assets/monster/boojang.png');
+    this.load.image('gwajang', '/src/assets/monster/gwajang.png');
+    this.load.image('file', '/src/assets/monster/file.png');
+    this.load.image('bogoseo', '/src/assets/monster/bogoseo.png');
   }
 
   create() {
     // 가운데 player 생성
     this.player = new Player(this, 400, 300);
 
-    // monster 1마리 생성 (랜덤 위치)
-    const x = Phaser.Math.Between(0, 800);
-    const y = Phaser.Math.Between(0, 600);
-    this.monster = new Monster(this, x, y, this.player, 'normal');
+    this.monsters = this.add.group();
 
-    this.add.existing(this.player);
-    this.add.existing(this.monster);
+    this.time.addEvent({
+        delay: 2000, // 2초마다 한 마리
+        loop: true,
+        callback: this.spawnRandomMonster,
+        callbackScope: this
+    });
   }
 
+  spawnRandomMonster() {
+    const monsterTypes = ['boojang', 'gwajang', 'file', 'bogoseo'];
+    const randType = Phaser.Utils.Array.GetRandom(monsterTypes);
+
+    const x = Phaser.Math.Between(0, 800);
+    const y = Phaser.Math.Between(0, 600);
+
+    const monster = new Monster(this, x, y, this.player, 'normal', randType);
+    monster.setScale(0.1); // 크기 조절
+
+    this.monsters.add(monster);
+}
   update() {
     this.player.update();
-    this.monster.update(); // → 플레이어 추적
+    this.monsters.children.iterate(monster => {
+        if (monster && monster.update){
+            monster.update();
+        }
+    }
+    );
   }
 }

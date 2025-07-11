@@ -35,10 +35,8 @@ export class RangedWeapon extends Weapon {
         bullet.body.setAllowGravity(false);
         bullet.setVelocityY(this.bulletSpeed);
 
-        // 3. 시각 확인용
         bullet.setScale(0.03);
 
-        // 4. 데미지 부여 (이제 충돌 콜백이 아니라 총알 자체에 데미지를 저장)
         bullet.damage = this.damage;
     }
   }
@@ -48,10 +46,14 @@ export class Coffee extends RangedWeapon {
   constructor(scene, player) {
     super(scene, player, 'coffee', -150, 1);
   }
+  fire(){
+
+  }
 }
 
 export class BackupUSB extends RangedWeapon {
   constructor(scene, player) {
     super(scene, player, 'usb', -100, 2);
+
   }
 }

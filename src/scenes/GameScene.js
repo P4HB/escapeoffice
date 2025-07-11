@@ -23,12 +23,37 @@ export default class GameScene extends Phaser.Scene {
 
   create() {
     this.add.image(0,0,'map3').setOrigin(0,0);
+    // 가운데 player 생성
+    this.monsters = this.physics.add.group();
+
+    this.bullets = this.physics.add.group();
+
+    this.time.addEvent({
+        delay: 2000, // 2초마다 한 마리
+        loop: true,
+        callback: this.spawnRandomMonster,
+        callbackScope: this
+    });
+
+
+
     this.cursors = this.input.keyboard.createCursorKeys()
     const centerX = this.cameras.main.width / 2
     const centerY = this.cameras.main.height / 2
 
     this.player = new Player(this, centerX, centerY)
 
+    this.baseHour = 19; // 오후 7시 시작
+    this.remainingMinutes = 0;
+
+    this.statusText = this.add.text(20, 20, '', {
+     fontSize: '20px',
+     fill: '#ffffff'
+        });
+    
+    this.physics.add.overlap(this.player, this.monsters, this.handlePlayerHit, null, this);
+
+  
     this.cameras.main.startFollow(this.player); // 카메라 따라가기
     this.monsters = this.physics.add.group({
         classType : Monster,
@@ -61,7 +86,39 @@ handleBulletMonsterCollision(bullet,monster){
     }
 }
 
+
+
+
   update(time,delta) {
     this.player.update(time, this.cursors);
+
+    // ✅ 퇴근 시간 계산 및 표시
+    const totalMinutes = this.baseHour * 60 + this.remainingMinutes;
+    const hour = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+
+    this.statusText.setText(
+      `퇴근 시간: 오후 ${hour}시 ${minutes.toString().padStart(2, '0')}분`
+    );
+
   }
+
+
+
+
+  handlePlayerHit(player, monster) {
+  console.log('⚠️ 충돌 발생!');
+
+  this.remainingMinutes += 10; // ✅ 10분 누적!
+
+
+  // 일단 테스트용으로 몬스터 제거만 해보자
+  monster.destroy();
+
+  const totalMinutes = this.baseHour * 60 + this.remainingMinutes;
+    if (totalMinutes >= 20 * 60) {
+    this.scene.start('GameOverScene');
+  }
+  
+    }
 }

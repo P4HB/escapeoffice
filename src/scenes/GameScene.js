@@ -48,7 +48,7 @@ export default class GameScene extends Phaser.Scene {
     this.statusText = this.add.text(20, 20, '', {
      fontSize: '20px',
      fill: '#ffffff'
-        });
+        }).setScrollFactor(0);
     
 
   

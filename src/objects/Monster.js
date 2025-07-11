@@ -14,7 +14,7 @@ export default class Monster extends Phaser.Physics.Arcade.Sprite {
     this.setCollideWorldBounds(true);
 
     const monsterStats = {
-      boojang: {hp:50, speed:30, damage : 5, scale : 0.2},
+      boojang: {hp:1000, speed:30, damage : 5, scale : 0.2},
       gwajang: {hp:30, speed:40, damage : 4, scale : 0.15},
       file : {hp:3, speed:50, damage :1, scale: 0.08},
       bogoseo : {hp:3, speed:50, damage :1, scale: 0.08},

@@ -16,16 +16,20 @@ export default class GameScene extends Phaser.Scene {
     this.load.image('usb','/src/assets/weapon/usb.png');
     this.load.image('coffee','/src/assets/weapon/coffee.png');
     this.load.image('player', 'src/assets/images/Player.png');
-
+    this.load.image('map', '/src/assets/map/map.png');
+    this.load.image('map2', '/src/assets/map/map2.png');
+    this.load.image('map3','/src/assets/map/map3.png');
   }
 
   create() {
+    this.add.image(0,0,'map3').setOrigin(0,0);
     this.cursors = this.input.keyboard.createCursorKeys()
     const centerX = this.cameras.main.width / 2
     const centerY = this.cameras.main.height / 2
 
     this.player = new Player(this, centerX, centerY)
 
+    this.cameras.main.startFollow(this.player); // 카메라 따라가기
     this.monsters = this.physics.add.group({
         classType : Monster,
         runChildUpdate : true

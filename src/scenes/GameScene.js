@@ -21,7 +21,6 @@ export default class GameScene extends Phaser.Scene {
 
   create() {
     // 가운데 player 생성
-    this.monsters = this.physics.add.group();
 
     this.bullets = this.physics.add.group();
 
@@ -48,13 +47,15 @@ export default class GameScene extends Phaser.Scene {
      fill: '#ffffff'
         });
     
-    this.physics.add.overlap(this.player, this.monsters, this.handlePlayerHit, null, this);
 
   
     this.monsters = this.physics.add.group({
         classType : Monster,
         runChildUpdate : true
     });
+
+    this.physics.add.overlap(this.player, this.monsters, this.handlePlayerHit, null, this);
+
 
     this.bullets = this.physics.add.group();
 

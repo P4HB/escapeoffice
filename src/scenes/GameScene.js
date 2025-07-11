@@ -1,6 +1,7 @@
 // scenes/GameScene.js
 import Player from '../objects/Player.js';
 import Monster from '../objects/Monster.js';
+import { spawnMonster } from '../systems/monsterspawn.js'
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -34,8 +35,6 @@ export default class GameScene extends Phaser.Scene {
 
 
     this.cursors = this.input.keyboard.createCursorKeys()
-
-    // ✅ 화면 크기 받아와서 중앙 계산
     const centerX = this.cameras.main.width / 2
     const centerY = this.cameras.main.height / 2
 
@@ -51,33 +50,43 @@ export default class GameScene extends Phaser.Scene {
     
     this.physics.add.overlap(this.player, this.monsters, this.handlePlayerHit, null, this);
 
-    
+  
+    this.monsters = this.physics.add.group({
+        classType : Monster,
+        runChildUpdate : true
+    });
 
+    this.bullets = this.physics.add.group();
+
+    this.physics.add.overlap(
+        this.bullets,
+        this.monsters,
+        this.handleBulletMonsterCollision,
+        null,
+        this
+    )
+    
+    this.time.addEvent({
+        delay: 2000, // 2초마다 한 마리
+        loop: true,
+        callback: ()=> {
+            spawnMonster(this, this.player, this.monsters);
+        }
+    });
   }
 
-  spawnRandomMonster() {
-    const monsterTypes = ['boojang', 'gwajang', 'file', 'bogoseo'];
-    const randType = Phaser.Utils.Array.GetRandom(monsterTypes);
-
-    const x = Phaser.Math.Between(0, 800);
-    const y = Phaser.Math.Between(0, 600);
-
-    const monster = new Monster(this, x, y, this.player, 'normal', randType);
-    // monster.setScale(0.1); // 크기 조절
-
-    this.monsters.add(monster);
+handleBulletMonsterCollision(bullet,monster){
+    if(monster && bullet.damage !== undefined){
+        monster.takeDamage(bullet.damage);
+        bullet.destroy();
+    }
 }
+
 
 
 
   update(time,delta) {
     this.player.update(time, this.cursors);
-    this.monsters.children.iterate(monster => {
-        if (monster && monster.update){
-            monster.update();
-        }
-    }
-    );
 
     // ✅ 퇴근 시간 계산 및 표시
     const totalMinutes = this.baseHour * 60 + this.remainingMinutes;

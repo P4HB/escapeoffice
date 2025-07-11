@@ -27,8 +27,6 @@ export class RangedWeapon extends Weapon {
     this.damage = damage;
   }
 
-  // 1. ★★★ 공통 로직을 별도 함수로 분리 ★★★
-  // 총알을 생성하고, 공통 속성을 설정한 뒤, 생성된 총알 객체를 반환(return)합니다.
   createBullet() {
     const bullet = this.scene.bullets.create(this.player.x, this.player.y, this.bulletKey);
 
@@ -40,19 +38,17 @@ export class RangedWeapon extends Weapon {
     return bullet;
   }
 
-  // 2. 기본 fire() 함수는 이제 더 간단해집니다.
-  // createBullet()으로 총알을 만들고, 기본 방향(위쪽)으로만 쏘게 합니다.
   fire() {
     const bullet = this.createBullet();
     if (bullet) {
-        bullet.setVelocityY(this.bulletSpeed); // 기본 발사 로직
+        bullet.setVelocityY(this.bulletSpeed); 
     }
   }
 }
 
 export class Coffee extends RangedWeapon {
   constructor(scene, player) {
-    super(scene, player, 'coffee', 150, 1); // 속도를 양수로 바꾸는 것이 다루기 편합니다.
+    super(scene, player, 'coffee', 150, 20); 
   }
   fire(){
     const bullet = this.createBullet();

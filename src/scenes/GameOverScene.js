@@ -4,7 +4,7 @@ export default class GameOverScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image('player', 'src/assets/images/Player.png'); // 눈물 흘리는 느낌 연출 가능
+    this.load.image('player', 'src/assets/images/Player.png'); // 플레이어 이미지
   }
 
   create() {
@@ -13,27 +13,30 @@ export default class GameOverScene extends Phaser.Scene {
     // 어두운 배경
     this.cameras.main.setBackgroundColor('#1a1a1a');
 
-    // 메인 텍스트
-    this.add.text(width / 2, height / 2 - 100, '😭 야근 확정! 퇴근 실패 😭', {
+    // 메인 텍스트 (안전 여백 확보 + setScrollFactor)
+    const title = this.add.text(width / 2, Math.max(60, height / 2 - 120), '😭 야근 확정! 퇴근 실패 😭', {
       fontSize: '36px',
       fill: '#ff4c4c',
       fontFamily: 'Arial Black',
       stroke: '#000000',
       strokeThickness: 5,
     }).setOrigin(0.5);
+    title.setScrollFactor(0);
 
-    // 캐릭터 이미지 (고개 숙인 느낌으로 중앙 아래에)
-    this.add.image(width / 2, height / 2 + 10, 'player')
+    // 캐릭터 이미지 (중앙에 위치)
+    this.add.image(width / 2, height / 2, 'player')
       .setScale(0.1)
       .setOrigin(0.5)
-      .setAngle(15); // 살짝 기울여 무기력한 느낌
+      .setAngle(15);
 
-    // 안내 텍스트 (깜빡임)
-    const instruction = this.add.text(width / 2, height / 2 + 130, '[스페이스바] 눌러서 다시 시작하기', {
+    // 안내 텍스트 (하단, 깜빡임)
+    const instructionY = Math.min(height - 60, height / 2 + 140);
+    const instruction = this.add.text(width / 2, instructionY, '[스페이스바] 눌러서 다시 시작하기', {
       fontSize: '20px',
       fill: '#ffffff',
       fontStyle: 'italic'
     }).setOrigin(0.5);
+    instruction.setScrollFactor(0);
 
     this.tweens.add({
       targets: instruction,
@@ -43,7 +46,7 @@ export default class GameOverScene extends Phaser.Scene {
       repeat: -1
     });
 
-    // 스페이스바 누르면 메뉴로
+    // 스페이스바 누르면 다시 메뉴로
     this.input.keyboard.once('keydown-SPACE', () => {
       this.scene.start('MenuScene');
     });

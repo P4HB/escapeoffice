@@ -9,17 +9,22 @@ import GameOverScene from './src/scenes/GameOverScene.js';
 
 const config = {
   type: Phaser.AUTO,
-  width: window.innerWidth,   // ✅ 전체 창 가로
-  height: window.innerHeight, // ✅ 전체 창 세로
+  width: window.innerWidth,
+  height: window.innerHeight,
   backgroundColor: '#1d1d1d',
+  scale: {
+    mode: Phaser.Scale.FIT, // 💡 해상도 맞춤
+    autoCenter: Phaser.Scale.CENTER_BOTH // 💡 중앙 정렬
+  },
   physics: {
     default: 'arcade',
     arcade: {
-      gravity: { y: 0 }, // ✅ 중력 제거
+      gravity: { y: 0 },
       debug: true
     }
   },
   scene: [MenuScene, GameScene, ClearScene, GameOverScene]
-}
+};
 
-new Phaser.Game(config)
+new Phaser.Game(config);
+

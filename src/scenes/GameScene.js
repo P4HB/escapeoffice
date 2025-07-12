@@ -22,8 +22,12 @@ export default class GameScene extends Phaser.Scene {
   }
 
   create() {
-    this.add.image(0,0,'map3').setOrigin(0,0);
-    // 가운데 player 생성
+    // 맵 이미지 추가 및 변수에 저장
+    const map = this.add.image(0, 0, 'map3').setOrigin(0);
+
+    // 맵 이미지 기준으로 월드 바운드 설정
+    this.physics.world.setBounds(0, 0, map.width, map.height);
+    this.cameras.main.setBounds(0, 0, map.width, map.height);
 
     this.bullets = this.physics.add.group();
 

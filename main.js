@@ -3,9 +3,7 @@ import GameScene from './src/scenes/GameScene.js'
 import ClearScene from './src/scenes/ClearScene.js';
 import MenuScene from './src/scenes/MenuScene.js';
 import GameOverScene from './src/scenes/GameOverScene.js';
-
-
-
+import RexOutlinePipelinePlugin from 'phaser3-rex-plugins/plugins/outlinepipeline-plugin.js';
 
 const config = {
   type: Phaser.AUTO,
@@ -22,6 +20,15 @@ const config = {
       gravity: { y: 0 },
       debug: true
     }
+  },
+  plugins: {
+    global: [
+      {
+        key: 'rexOutlinePipeline',
+        plugin: RexOutlinePipelinePlugin,
+        start: true
+      }
+    ]
   },
   scene: [MenuScene, GameScene, ClearScene, GameOverScene]
 };

@@ -1,4 +1,5 @@
 // objects/Monster.js
+import { DroppedWeapon } from "./Weapon";
 export default class Monster extends Phaser.Physics.Arcade.Sprite {
   constructor(scene, x, y, player, type = 'normal', textureKey = 'monster') {
     super(scene, x, y, textureKey);
@@ -50,6 +51,15 @@ export default class Monster extends Phaser.Physics.Arcade.Sprite {
   }
 
   die() {
+    // 일정 확률로 무기 드랍
+    if (Math.random() < 0.5) { // 50% 확률
+      const weaponTypes = ['coffee', 'usb', 'mouse', 'bomb'];
+      const weaponKey = weaponTypes[Math.floor(Math.random() * weaponTypes.length)];
+      const drop = new DroppedWeapon(this.scene, this.x, this.y, weaponKey);
+      if (this.scene.weapons) {
+        this.scene.weapons.add(drop);
+      }
+    }
     this.destroy();
   }
 

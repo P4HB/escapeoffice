@@ -2,10 +2,16 @@
 import Player from '../objects/Player.js';
 import Monster from '../objects/Monster.js';
 import { spawnMonster } from '../systems/monsterspawn.js'
+import { DroppedWeapon, BombObject } from '../objects/Weapon.js';
+import WeaponSwapModal from '../ui/WeaponSwapModal.js';
+
+const WEAPON_IMAGE_KEYS = ['coffee', 'usb', 'mouse', 'bomb'];
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
     super({ key: 'GameScene' });
+    this.isPausedForWeaponSwap = false;
+    this.weaponSwapModalInstance = null;
   }
 
   preload() {
@@ -15,6 +21,8 @@ export default class GameScene extends Phaser.Scene {
     this.load.image('bogoseo', '/src/assets/monster/bogoseo.png');
     this.load.image('usb','/src/assets/weapon/usb.png');
     this.load.image('coffee','/src/assets/weapon/coffee.png');
+    this.load.image('mouse','/src/assets/weapon/mouse.png');
+    this.load.image('bomb','/src/assets/weapon/printer.png');
     this.load.image('player', 'src/assets/images/Player.png');
     this.load.image('map', '/src/assets/map/map.png');
     this.load.image('map2', '/src/assets/map/map2.png');
@@ -30,6 +38,9 @@ export default class GameScene extends Phaser.Scene {
     this.cameras.main.setBounds(0, 0, map.width, map.height);
 
     this.bullets = this.physics.add.group();
+    // 무기 드랍 그룹 생성
+    this.weapons = this.physics.add.group();
+    this.bombs = this.physics.add.group(); // bomb 그룹 생성
 
     this.time.addEvent({
         delay: 2000, // 2초마다 한 마리
@@ -92,6 +103,17 @@ export default class GameScene extends Phaser.Scene {
     
     // 수동 콜라이더 시각화를 위한 그래픽 그룹
     this.debugGraphics = this.add.graphics();
+
+    // 플레이어와 드랍 무기 충돌 처리
+    this.physics.add.overlap(this.player, this.weapons, this.handleWeaponPickup, null, this);
+    // 몬스터와 bomb 충돌 처리
+    this.physics.add.overlap(this.monsters, this.bombs, this.handleBombHit, null, this);
+
+    // 무기 UI 그룹 생성
+    this.weaponUIImages = [];
+    this.weaponUIBoxes = [];
+    this.weaponUIText = null;
+    this.drawWeaponUI();
   }
 
 handleBulletMonsterCollision(bullet,monster){
@@ -102,6 +124,7 @@ handleBulletMonsterCollision(bullet,monster){
 }
 
   update(time,delta) {
+    if (this.isPausedForWeaponSwap) return; // 모달이 뜬 동안 모든 시스템 정지
     this.player.update(time, this.cursors);
 
     // ✅ 퇴근 시간 계산 및 표시
@@ -131,6 +154,8 @@ handleBulletMonsterCollision(bullet,monster){
     
     // 수동 콜라이더 시각화
     this.drawColliders();
+    // 무기 UI 갱신
+    this.drawWeaponUI();
   }
   
   drawColliders() {
@@ -188,4 +213,82 @@ handleBulletMonsterCollision(bullet,monster){
   }
   
     }
+
+  handleWeaponPickup(player, weaponSprite) {
+    if (player && weaponSprite && weaponSprite.weaponKey) {
+      // 이미 3종류 보유 & 새로운 무기라면 모달 표시
+      if (
+        Object.keys(player.obtainedWeapons).length >= 3 &&
+        !player.obtainedWeapons[weaponSprite.weaponKey]
+      ) {
+        this.isPausedForWeaponSwap = true;
+        this.weaponSwapModalInstance = new WeaponSwapModal(this, player, weaponSprite.weaponKey, weaponSprite, (swapped) => {
+          this.isPausedForWeaponSwap = false;
+          this.weaponSwapModalInstance = null;
+          if (!swapped && weaponSprite && weaponSprite.active) weaponSprite.destroy();
+        });
+        return;
+      }
+      player.obtainWeapon(weaponSprite.weaponKey);
+      weaponSprite.destroy();
+    }
+  }
+
+  handleBombHit(monster, bomb) {
+    if (monster && bomb && bomb.active) {
+      // 폭발 효과(간단히 bomb 제거)
+      bomb.destroy();
+      // 몬스터에게 데미지
+      if (typeof monster.takeDamage === 'function') {
+        monster.takeDamage(bomb.damage || 30);
+      }
+      // TODO: 폭발 이펙트 등 추가 가능
+    }
+  }
+
+  drawWeaponUI() {
+    // 기존 UI 이미지/박스/텍스트 제거
+    this.weaponUIImages.forEach(img => img.destroy());
+    this.weaponUIImages = [];
+    this.weaponUIBoxes.forEach(box => box.destroy());
+    this.weaponUIBoxes = [];
+    if (this.weaponUIText) { this.weaponUIText.destroy(); this.weaponUIText = null; }
+    // 인벤토리 UI 위치/크기
+    const { width, height } = this.scale;
+    const iconSize = 48;
+    const margin = 12;
+    const boxPadding = 8;
+    const inventoryWidth = iconSize * 3 + boxPadding * 4;
+    const inventoryHeight = iconSize + boxPadding * 2;
+    const inventoryX = width - inventoryWidth - margin;
+    const inventoryY = height - inventoryHeight - margin;
+    // 인벤토리 박스 3개 그리기
+    for (let i = 0; i < 3; i++) {
+      const x = inventoryX + boxPadding + i * (iconSize + boxPadding);
+      const y = inventoryY + boxPadding;
+      const box = this.add.rectangle(x + iconSize/2, y + iconSize/2, iconSize, iconSize, 0x222222, 0.7)
+        .setStrokeStyle(2, 0xffffff)
+        .setScrollFactor(0);
+      this.weaponUIBoxes.push(box);
+    }
+    // 무기 아이콘 가로로 배치
+    if (this.player && this.player.obtainedWeapons) {
+      const keys = Object.keys(this.player.obtainedWeapons);
+      keys.slice(0, 3).forEach((weaponKey, idx) => {
+        if (WEAPON_IMAGE_KEYS.includes(weaponKey)) {
+          const x = inventoryX + boxPadding + idx * (iconSize + boxPadding) + iconSize/2;
+          const y = inventoryY + boxPadding + iconSize/2;
+          const img = this.add.image(x, y, weaponKey).setScrollFactor(0).setDisplaySize(iconSize-8, iconSize-8);
+          this.weaponUIImages.push(img);
+        }
+      });
+    }
+    // '무기 목록' 텍스트 추가
+    this.weaponUIText = this.add.text(
+      inventoryX + inventoryWidth/2,
+      inventoryY - 8,
+      '무기 목록',
+      { fontSize: '18px', fill: '#fff', fontFamily: 'Arial', align: 'center', stroke: '#000', strokeThickness: 3 }
+    ).setOrigin(0.5, 1).setScrollFactor(0);
+  }
 }

@@ -1,6 +1,13 @@
-import { Coffee, BackupUSB } from "./Weapon"
+import { Coffee, BackupUSB, MouseWeapon, BombWeapon } from "./Weapon"
 
 // src/objects/Player.js
+
+const WEAPON_CLASS_MAP = {
+  coffee: Coffee,
+  usb: BackupUSB,
+  mouse: MouseWeapon,
+  bomb: BombWeapon
+};
 
 export default class Player extends Phaser.Physics.Arcade.Sprite {
   constructor(scene, x, y) {
@@ -22,15 +29,15 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     console.log('Player position:', this.x, this.y);
     
     this.setCollideWorldBounds(true)
-    // 두 무기 모두 장착
-    this.coffeeWeapon = new Coffee(scene, this);
-    this.usbWeapon = new BackupUSB(scene, this);
+    // 플레이어가 획득한 무기 목록 (key: 무기이름, value: 무기 인스턴스)
+    this.obtainedWeapons = {};
+    // 초기 무기로 usb 지급
+    this.obtainWeapon('usb');
   }
 
   update(time, cursors) {
-    // 두 무기 모두 발사
-    this.coffeeWeapon.update(time);
-    this.usbWeapon.update(time);
+    // 획득한 무기만 발사
+    Object.values(this.obtainedWeapons).forEach(weapon => weapon.update(time));
     // 좌우 이동
     if (cursors.left.isDown) {
       this.setVelocityX(-160)
@@ -49,6 +56,19 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       this.setVelocityY(160)
     } else {
       this.setVelocityY(0)
+    }
+  }
+
+  // 무기 획득
+  obtainWeapon(weaponKey) {
+    if (!this.obtainedWeapons[weaponKey] && WEAPON_CLASS_MAP[weaponKey]) {
+      this.obtainedWeapons[weaponKey] = new WEAPON_CLASS_MAP[weaponKey](this.scene, this);
+      // 최대 3종류만 보유
+      if (Object.keys(this.obtainedWeapons).length > 3) {
+        // 가장 먼저 획득한 무기 제거
+        const firstKey = Object.keys(this.obtainedWeapons)[0];
+        delete this.obtainedWeapons[firstKey];
+      }
     }
   }
 }

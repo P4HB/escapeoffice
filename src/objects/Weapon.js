@@ -34,6 +34,11 @@ export class RangedWeapon extends Weapon {
         bullet.body.setAllowGravity(false);
         bullet.setScale(0.03);
         bullet.damage = this.damage;
+        
+        // 콜라이더를 원본 이미지 테두리에 맞춤
+        const tex = bullet.texture.getSourceImage();
+        bullet.body.setSize(tex.width, tex.height);
+        bullet.body.setOffset(0, 0);
     }
     return bullet;
   }
@@ -69,5 +74,31 @@ export class Coffee extends RangedWeapon {
 export class BackupUSB extends RangedWeapon {
   constructor(scene, player) {
     super(scene, player, 'usb', -100, 2);
+  }
+  fire() {
+    // 가장 가까운 몬스터 탐색
+    const monsters = this.scene.monsters?.getChildren?.() || [];
+    if (!monsters.length) return;
+    let minDist = Infinity;
+    let target = null;
+    const px = this.player.x;
+    const py = this.player.y;
+    monsters.forEach(monster => {
+      const dx = monster.x - px;
+      const dy = monster.y - py;
+      const dist = dx * dx + dy * dy;
+      if (dist < minDist) {
+        minDist = dist;
+        target = monster;
+      }
+    });
+    if (!target) return;
+    // 방향 계산
+    const angle = Phaser.Math.Angle.Between(px, py, target.x, target.y);
+    const bullet = this.createBullet();
+    if (bullet && bullet.body) {
+      const velocity = this.scene.physics.velocityFromRotation(angle, 300); // 속도 300
+      bullet.body.setVelocity(velocity.x, velocity.y);
+    }
   }
 }

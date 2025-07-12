@@ -3,7 +3,9 @@ import Player from '../objects/Player.js';
 import Monster from '../objects/Monster.js';
 import { spawnMonster } from '../systems/monsterspawn.js'
 import { DroppedWeapon, BombObject } from '../objects/Weapon.js';
+import { ExpObject } from '../objects/Exp.js';
 import WeaponSwapModal from '../ui/WeaponSwapModal.js';
+import WeaponUpgradeModal from '../ui/WeaponUpgradeModal.js';
 
 const WEAPON_IMAGE_KEYS = ['coffee', 'usb', 'mouse', 'bomb'];
 
@@ -12,6 +14,8 @@ export default class GameScene extends Phaser.Scene {
     super({ key: 'GameScene' });
     this.isPausedForWeaponSwap = false;
     this.weaponSwapModalInstance = null;
+    this.isPausedForWeaponUpgrade = false;
+    this.weaponUpgradeModalInstance = null;
   }
 
   preload() {
@@ -27,6 +31,7 @@ export default class GameScene extends Phaser.Scene {
     this.load.image('map', '/src/assets/map/map.png');
     this.load.image('map2', '/src/assets/map/map2.png');
     this.load.image('map3','/src/assets/map/map3.png');
+    this.load.image('exp', 'src/assets/images/exp.png');
   }
 
   create() {
@@ -41,8 +46,10 @@ export default class GameScene extends Phaser.Scene {
     // 무기 드랍 그룹 생성
     this.weapons = this.physics.add.group();
     this.bombs = this.physics.add.group(); // bomb 그룹 생성
+    this.exps = this.physics.add.group(); // 경험치 그룹
 
-    this.time.addEvent({
+    // 몬스터 스폰 타이머들 (일시정지 가능하도록 변수에 저장)
+    this.monsterSpawnTimer1 = this.time.addEvent({
         delay: 2000, // 2초마다 한 마리
         loop: true,
         callback: this.spawnRandomMonster,
@@ -90,7 +97,7 @@ export default class GameScene extends Phaser.Scene {
         this
     )
     
-    this.time.addEvent({
+    this.monsterSpawnTimer2 = this.time.addEvent({
         delay: 2000, // 2초마다 한 마리
         loop: true,
         callback: ()=> {
@@ -108,6 +115,7 @@ export default class GameScene extends Phaser.Scene {
     this.physics.add.overlap(this.player, this.weapons, this.handleWeaponPickup, null, this);
     // 몬스터와 bomb 충돌 처리
     this.physics.add.overlap(this.monsters, this.bombs, this.handleBombHit, null, this);
+    this.physics.add.overlap(this.player, this.exps, this.handleExpPickup, null, this);
 
     // 무기 UI 그룹 생성
     this.weaponUIImages = [];
@@ -117,6 +125,9 @@ export default class GameScene extends Phaser.Scene {
   }
 
 handleBulletMonsterCollision(bullet,monster){
+    // 모달이 열려있으면 총알 충돌 처리 안함
+    if (this.isPausedForWeaponSwap || this.isPausedForWeaponUpgrade) return;
+    
     if(monster && bullet.damage !== undefined){
         monster.takeDamage(bullet.damage);
         bullet.destroy();
@@ -124,7 +135,10 @@ handleBulletMonsterCollision(bullet,monster){
 }
 
   update(time,delta) {
-    if (this.isPausedForWeaponSwap) return; // 모달이 뜬 동안 모든 시스템 정지
+    if (this.isPausedForWeaponSwap || this.isPausedForWeaponUpgrade) {
+      // 모달이 뜬 동안 모든 시스템 정지
+      return;
+    }
     this.player.update(time, this.cursors);
 
     // ✅ 퇴근 시간 계산 및 표시
@@ -200,21 +214,26 @@ handleBulletMonsterCollision(bullet,monster){
   }
 
   handlePlayerHit(player, monster) {
-  console.log('⚠️ 충돌 발생!');
+    // 모달이 열려있으면 충돌 처리 안함
+    if (this.isPausedForWeaponSwap || this.isPausedForWeaponUpgrade) return;
+    
+    console.log('⚠️ 충돌 발생!');
 
-  this.remainingMinutes += 10; // ✅ 10분 누적!
+    this.remainingMinutes += 10; // ✅ 10분 누적!
 
-  // 일단 테스트용으로 몬스터 제거만 해보자
-  monster.destroy();
+    // 일단 테스트용으로 몬스터 제거만 해보자
+    monster.destroy();
 
-  const totalMinutes = this.baseHour * 60 + this.remainingMinutes;
+    const totalMinutes = this.baseHour * 60 + this.remainingMinutes;
     if (totalMinutes >= 20 * 60) {
-    this.scene.start('GameOverScene', { reason: 'collision' });
-  }
-  
+      this.scene.start('GameOverScene', { reason: 'collision' });
     }
+  }
 
   handleWeaponPickup(player, weaponSprite) {
+    // 모달이 열려있으면 무기 획득 처리 안함
+    if (this.isPausedForWeaponSwap || this.isPausedForWeaponUpgrade) return;
+    
     if (player && weaponSprite && weaponSprite.weaponKey) {
       // 이미 3종류 보유 & 새로운 무기라면 모달 표시
       if (
@@ -222,9 +241,19 @@ handleBulletMonsterCollision(bullet,monster){
         !player.obtainedWeapons[weaponSprite.weaponKey]
       ) {
         this.isPausedForWeaponSwap = true;
+        
+        // 게임 타이머와 물리 시뮬레이션 일시정지
+        this.time.paused = true;
+        this.physics.world.pause();
+        
         this.weaponSwapModalInstance = new WeaponSwapModal(this, player, weaponSprite.weaponKey, weaponSprite, (swapped) => {
           this.isPausedForWeaponSwap = false;
           this.weaponSwapModalInstance = null;
+          
+          // 게임 타이머와 물리 시뮬레이션 재개
+          this.time.paused = false;
+          this.physics.world.resume();
+          
           if (!swapped && weaponSprite && weaponSprite.active) weaponSprite.destroy();
         });
         return;
@@ -235,14 +264,52 @@ handleBulletMonsterCollision(bullet,monster){
   }
 
   handleBombHit(monster, bomb) {
+    // 모달이 열려있으면 폭탄 처리 안함
+    if (this.isPausedForWeaponSwap || this.isPausedForWeaponUpgrade) return;
+    
     if (monster && bomb && bomb.active) {
-      // 폭발 효과(간단히 bomb 제거)
+      // 폭발 범위 내의 모든 몬스터에게 데미지
+      const explosionRadius = bomb.explosionRadius || 100;
+      const bombX = bomb.x;
+      const bombY = bomb.y;
+      
+      this.monsters.getChildren().forEach(targetMonster => {
+        if (targetMonster.active) {
+          const distance = Phaser.Math.Distance.Between(bombX, bombY, targetMonster.x, targetMonster.y);
+          if (distance <= explosionRadius) {
+            if (typeof targetMonster.takeDamage === 'function') {
+              targetMonster.takeDamage(bomb.damage || 30);
+            }
+          }
+        }
+      });
+      
+      // 폭발 이펙트 (간단한 원형 그래픽)
+      const explosion = this.add.circle(bombX, bombY, explosionRadius, 0xff0000, 0.3)
+        .setScrollFactor(0);
+      
+      // 폭발 이펙트 페이드아웃
+      this.tweens.add({
+        targets: explosion,
+        alpha: 0,
+        duration: 500,
+        onComplete: () => {
+          explosion.destroy();
+        }
+      });
+      
+      // 폭탄 제거
       bomb.destroy();
-      // 몬스터에게 데미지
-      if (typeof monster.takeDamage === 'function') {
-        monster.takeDamage(bomb.damage || 30);
-      }
-      // TODO: 폭발 이펙트 등 추가 가능
+    }
+  }
+
+  handleExpPickup(player, expSprite) {
+    // 모달이 열려있으면 경험치 획득 처리 안함
+    if (this.isPausedForWeaponSwap || this.isPausedForWeaponUpgrade) return;
+    
+    if (player && expSprite && expSprite.amount) {
+      player.gainExp(expSprite.amount);
+      expSprite.destroy();
     }
   }
 
@@ -290,5 +357,23 @@ handleBulletMonsterCollision(bullet,monster){
       '무기 목록',
       { fontSize: '18px', fill: '#fff', fontFamily: 'Arial', align: 'center', stroke: '#000', strokeThickness: 3 }
     ).setOrigin(0.5, 1).setScrollFactor(0);
+  }
+
+  // 무기 업그레이드 모달 표시
+  showWeaponUpgradeModal() {
+    this.isPausedForWeaponUpgrade = true;
+    
+    // 게임 타이머와 물리 시뮬레이션 일시정지
+    this.time.paused = true;
+    this.physics.world.pause();
+    
+    this.weaponUpgradeModalInstance = new WeaponUpgradeModal(this, this.player, () => {
+      this.isPausedForWeaponUpgrade = false;
+      this.weaponUpgradeModalInstance = null;
+      
+      // 게임 타이머와 물리 시뮬레이션 재개
+      this.time.paused = false;
+      this.physics.world.resume();
+    });
   }
 }

@@ -33,6 +33,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.obtainedWeapons = {};
     // 초기 무기로 usb 지급
     this.obtainWeapon('usb');
+    // 경험치/레벨
+    this.exp = 0;
+    this.level = 1;
+    // 경험치/레벨 UI
+    this.expText = scene.add.text(24, 24, '', {fontSize:'20px', fill:'#fff', stroke:'#000', strokeThickness:3, fontFamily:'Arial'}).setScrollFactor(0).setDepth(100);
+    this.updateExpUI();
   }
 
   update(time, cursors) {
@@ -57,6 +63,31 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     } else {
       this.setVelocityY(0)
     }
+    // 경험치/레벨 UI 갱신
+    this.updateExpUI();
+  }
+
+  // 경험치 획득
+  gainExp(amount) {
+    this.exp += amount;
+    if (this.exp >= 100) {
+      this.exp -= 100;
+      this.levelUp();
+    }
+    this.updateExpUI();
+  }
+
+  // 레벨업
+  levelUp() {
+    this.level += 1;
+    // 무기 업그레이드 모달 띄우기
+    if (this.scene && typeof this.scene.showWeaponUpgradeModal === 'function') {
+      this.scene.showWeaponUpgradeModal();
+    }
+  }
+
+  updateExpUI() {
+    this.expText.setText(`레벨: ${this.level}   경험치: ${this.exp}/100`);
   }
 
   // 무기 획득

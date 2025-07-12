@@ -5,6 +5,7 @@ export class Weapon {
     this.cooldown = 500; // milliseconds
     this.lastFired = 0;
     this.damage = 1; // 기본 데미지
+    this.level = 1; // 업그레이드 레벨
   }
 
   update(time) {
@@ -17,6 +18,12 @@ export class Weapon {
   fire() {
     // Override in subclass
   }
+
+  upgrade() {
+    this.level += 1;
+    // 기본 업그레이드: 데미지 증가
+    this.damage = Math.floor(this.damage * 1.2);
+  }
 }
 
 // 필드에 드랍되는 무기(아이템) 클래스
@@ -28,7 +35,7 @@ export class DroppedWeapon extends Phaser.Physics.Arcade.Sprite {
     this.setOrigin(0.5, 0.5);
     this.setScale(0.04); // 더 작게
     this.body.setAllowGravity(false);
-    this.weaponKey = weaponKey; // 'coffee', 'usb', 'mouse', 'bomb' 중 하나
+this.weaponKey = weaponKey; // 'coffee', 'usb', 'mouse', 'bomb' 중 하나
     // 콜라이더를 원본 이미지 테두리에 맞춤
     const tex = this.texture.getSourceImage();
     this.body.setSize(tex.width, tex.height);
@@ -87,6 +94,7 @@ export class Coffee extends RangedWeapon {
   constructor(scene, player) {
     super(scene, player, 'coffee', 150, 20); 
   }
+  
   fire(){
     const bullet = this.createBullet();
     if (bullet && bullet.body) {
@@ -98,12 +106,20 @@ export class Coffee extends RangedWeapon {
         if(bullet) bullet.destroy();
         }
     }
+
+  upgrade() {
+    super.upgrade();
+    // 커피 특별 업그레이드: 데미지 추가 증가
+    this.damage = Math.floor(this.damage * 1.2); // 총 44% 증가
+  }
 }
 
 export class BackupUSB extends RangedWeapon {
   constructor(scene, player) {
     super(scene, player, 'usb', -100, 2);
+    this.range = 300; // 기본 사정거리
   }
+  
   fire() {
     const monsters = this.scene.monsters?.getChildren?.() || [];
     if (!monsters.length) return;
@@ -124,9 +140,15 @@ export class BackupUSB extends RangedWeapon {
     const angle = Phaser.Math.Angle.Between(px, py, target.x, target.y);
     const bullet = this.createBullet();
     if (bullet && bullet.body) {
-      const velocity = this.scene.physics.velocityFromRotation(angle, 300);
+      const velocity = this.scene.physics.velocityFromRotation(angle, this.range);
       bullet.body.setVelocity(velocity.x, velocity.y);
     }
+  }
+
+  upgrade() {
+    super.upgrade();
+    // USB 특별 업그레이드: 사정거리 증가
+    this.range = Math.floor(this.range * 1.3); // 30% 증가
   }
 }
 
@@ -134,7 +156,9 @@ export class BackupUSB extends RangedWeapon {
 export class MouseWeapon extends RangedWeapon {
   constructor(scene, player) {
     super(scene, player, 'mouse', 250, 8);
+    this.fireRate = 300; // 기본 발사 속도
   }
+  
   fire() {
     // 플레이어 이동 방향 계산
     const vx = this.player.body.velocity.x;
@@ -143,9 +167,15 @@ export class MouseWeapon extends RangedWeapon {
     const angle = Math.atan2(vy, vx);
     const bullet = this.createBullet();
     if (bullet && bullet.body) {
-      const velocity = this.scene.physics.velocityFromRotation(angle, 300);
+      const velocity = this.scene.physics.velocityFromRotation(angle, this.fireRate);
       bullet.body.setVelocity(velocity.x, velocity.y);
     }
+  }
+
+  upgrade() {
+    super.upgrade();
+    // 마우스 특별 업그레이드: 발사 속도 증가
+    this.cooldown = Math.floor(this.cooldown * 0.75); // 25% 빨라짐
   }
 }
 
@@ -156,6 +186,7 @@ export class BombWeapon extends Weapon {
     this.lastFired = 0;
     this.damage = 30;
     this.bombLife = 2000; // 프린터(지뢰) 유지 시간(ms)
+    this.explosionRadius = 100; // 폭발 범위
     // 프린터 그룹이 없으면 생성
     if (!scene.bombs) {
       scene.bombs = scene.physics.add.group();
@@ -171,14 +202,20 @@ export class BombWeapon extends Weapon {
 
   fire() {
     // 플레이어 위치에 프린터 설치
-    const bomb = new BombObject(this.scene, this.player.x, this.player.y, this.damage, this.bombLife);
+    const bomb = new BombObject(this.scene, this.player.x, this.player.y, this.damage, this.bombLife, this.explosionRadius);
     this.scene.bombs.add(bomb);
+  }
+
+  upgrade() {
+    super.upgrade();
+    // 폭탄 특별 업그레이드: 폭발 범위 증가
+    this.explosionRadius = Math.floor(this.explosionRadius * 1.4); // 40% 증가
   }
 }
 
 // 프린터(지뢰) 오브젝트
 export class BombObject extends Phaser.Physics.Arcade.Sprite {
-  constructor(scene, x, y, damage, life) {
+  constructor(scene, x, y, damage, life, explosionRadius = 100) {
     super(scene, x, y, 'bomb');
     scene.add.existing(this);
     scene.physics.add.existing(this);
@@ -186,6 +223,9 @@ export class BombObject extends Phaser.Physics.Arcade.Sprite {
     this.setScale(0.07);
     this.body.setAllowGravity(false);
     this.damage = damage;
+    this.explosionRadius = explosionRadius;
+    // 빨간색 tint 적용
+    this.setTint(0xff0000);
     // 콜라이더를 원본 이미지 테두리에 맞춤
     const tex = this.texture.getSourceImage();
     this.body.setSize(tex.width, tex.height);
@@ -193,3 +233,5 @@ export class BombObject extends Phaser.Physics.Arcade.Sprite {
     // 자동 제거 타이머 제거: 몬스터와 충돌할 때까지 유지
   }
 }
+
+// 경험치 오브젝트는 Exp.js에서 관리

@@ -1,5 +1,6 @@
 // objects/Monster.js
 import { DroppedWeapon } from "./Weapon";
+import { ExpObject } from "./Exp";
 export default class Monster extends Phaser.Physics.Arcade.Sprite {
   constructor(scene, x, y, player, type = 'normal', textureKey = 'monster') {
     super(scene, x, y, textureKey);
@@ -59,6 +60,12 @@ export default class Monster extends Phaser.Physics.Arcade.Sprite {
       if (this.scene.weapons) {
         this.scene.weapons.add(drop);
       }
+    }
+    // 경험치 드랍 (체력에 비례, 최소 5)
+    const expAmount = Math.max(10, Math.round(this.hp * 0.7));
+    const exp = new ExpObject(this.scene, this.x, this.y, expAmount);
+    if (this.scene.exps) {
+      this.scene.exps.add(exp);
     }
     this.destroy();
   }

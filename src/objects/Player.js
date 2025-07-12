@@ -37,7 +37,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.exp = 0;
     this.level = 1;
     // 경험치/레벨 UI
-    this.expText = scene.add.text(24, 24, '', {fontSize:'20px', fill:'#fff', stroke:'#000', strokeThickness:3, fontFamily:'Arial'}).setScrollFactor(0).setDepth(100);
+    this.createExpUI()
     this.updateExpUI();
   }
 
@@ -86,8 +86,36 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
+  createExpUI() {
+    const rightX = this.scene.scale.width - 160;
+    const topY = 20;
+
+    this.expLabel = this.scene.add.text(rightX, topY, `LVL : ${this.level}`, {
+      fontSize: '18px',
+      fill: '#ffffff',
+      fontFamily: 'Arial',
+      stroke: '#000',
+      strokeThickness: 3
+    }).setScrollFactor(0).setDepth(100);
+
+    this.expBarBg = this.scene.add.graphics().setScrollFactor(0).setDepth(99);
+    this.expBarBg.fillStyle(0x555555, 1);
+    this.expBarBg.fillRect(rightX, topY + 30, 120, 16);
+
+    this.expBar = this.scene.add.graphics().setScrollFactor(0).setDepth(100);
+  }
+  
   updateExpUI() {
-    this.expText.setText(`레벨: ${this.level}   경험치: ${this.exp}/100`);
+    this.expLabel.setText(`LVL : ${this.level}`);
+    
+    const rightX = this.scene.scale.width - 160;
+    const topY = 20;
+    const expRatio = Phaser.Math.Clamp(this.exp / 100, 0, 1);
+    const filledWidth = 120 * expRatio;
+
+    this.expBar.clear();
+    this.expBar.fillStyle(0x00ff00, 1);
+    this.expBar.fillRect(rightX, topY + 30, filledWidth, 16);
   }
 
   // 무기 획득

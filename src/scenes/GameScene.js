@@ -42,7 +42,7 @@ export default class GameScene extends Phaser.Scene {
 
     this.player = new Player(this, centerX, centerY)
 
-    this.baseHour = 19; // 오후 7시 시작
+    this.baseHour = 19;   // 오후 7시 시작
     this.remainingMinutes = 0;
 
     this.statusText = this.add.text(20, 20, '', {
@@ -61,7 +61,6 @@ export default class GameScene extends Phaser.Scene {
     this.physics.add.overlap(this.player, this.monsters, this.handlePlayerHit, null, this);
 
 
-    this.bullets = this.physics.add.group();
 
     this.physics.add.overlap(
         this.bullets,

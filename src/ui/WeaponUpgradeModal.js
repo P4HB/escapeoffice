@@ -82,14 +82,16 @@ export default class WeaponUpgradeModal {
       coffee: '☕ 커피',
       usb: '💾 USB',
       mouse: '🖱️ 마우스',
-      bomb: '💣 프린터'
+      bomb: '💣 프린터',
+      airpods: '🎧 AirPods'
     };
 
     const weaponDescriptions = {
       coffee: '데미지 +20%',
       usb: '사정거리 +30%',
       mouse: '발사속도 +25%',
-      bomb: '폭발범위 +40%'
+      bomb: '폭발범위 +40%',
+      airpods: '회전속도 +20%'
     };
 
     // 옵션 박스
@@ -183,7 +185,8 @@ export default class WeaponUpgradeModal {
       coffee: '☕ 커피',
       usb: '💾 USB',
       mouse: '🖱️ 마우스',
-      bomb: '💣 프린터'
+      bomb: '💣 프린터',
+      airpods: '🎧 AirPods'
     };
 
     // 효과 텍스트

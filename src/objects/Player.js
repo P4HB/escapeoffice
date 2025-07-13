@@ -1,4 +1,4 @@
-import { Coffee, BackupUSB, MouseWeapon, BombWeapon } from "./Weapon"
+import { Coffee, BackupUSB, MouseWeapon, BombWeapon, AirPods } from "./Weapon"
 
 // src/objects/Player.js
 
@@ -6,7 +6,8 @@ const WEAPON_CLASS_MAP = {
   coffee: Coffee,
   usb: BackupUSB,
   mouse: MouseWeapon,
-  bomb: BombWeapon
+  bomb: BombWeapon,
+  airpods: AirPods
 };
 
 export default class Player extends Phaser.Physics.Arcade.Sprite {
@@ -31,9 +32,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.setCollideWorldBounds(true)
     // 플레이어가 획득한 무기 목록 (key: 무기이름, value: 무기 인스턴스)
     this.obtainedWeapons = {};
-    // 초기 무기로 usb 지급
-    this.obtainWeapon('usb');
-    // 경험치/레벨
+    // 초기 무기로 airpods 지급
+    this.obtainWeapon('airpods');
+    // 경험치/레벨 
     this.exp = 0;
     this.level = 1;
     // 경험치/레벨 UI

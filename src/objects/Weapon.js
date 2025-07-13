@@ -234,4 +234,140 @@ export class BombObject extends Phaser.Physics.Arcade.Sprite {
   }
 }
 
+// 회전 무기 클래스 (Spinning Weapon)
+export class SpinningWeapon extends Weapon {
+  constructor(scene, player, weaponKey, damage = 10, rotationRadius = 80) {
+    super(scene, player);
+    this.weaponKey = weaponKey;
+    this.damage = damage;
+    this.rotationRadius = rotationRadius;
+    this.rotationSpeed = 2; // 회전 속도 (라디안/초)
+    this.currentAngle = 0;
+    this.instances = []; // 무기 인스턴스들
+  }
+
+  update(time) {
+    // 레벨에 따라 무기 인스턴스 수 조정
+    const instanceCount = this.level;
+    const angleStep = (2 * Math.PI) / instanceCount; // 360도 / 인스턴스 수
+    
+    // 필요한 만큼 인스턴스 생성
+    while (this.instances.length < instanceCount) {
+      const instance = new SpinningWeaponInstance(
+        this.scene, 
+        this.player, 
+        this.weaponKey, 
+        this.damage,
+        this.rotationRadius,
+        this.instances.length * angleStep
+      );
+      this.instances.push(instance);
+    }
+    
+    // 불필요한 인스턴스 제거
+    while (this.instances.length > instanceCount) {
+      const instance = this.instances.pop();
+      if (instance && instance.active) {
+        instance.destroy();
+      }
+    }
+    
+    // 모든 인스턴스 업데이트
+    this.instances.forEach((instance, index) => {
+      if (instance && instance.active) {
+        instance.update(time, this.rotationSpeed, this.currentAngle + (index * angleStep));
+      }
+    });
+    
+    // 전체 회전 각도 업데이트
+    this.currentAngle += this.rotationSpeed * (this.scene.game.loop.delta / 1000);
+  }
+
+  upgrade() {
+    super.upgrade();
+    // 회전 무기 특별 업그레이드: 회전 속도 증가
+    this.rotationSpeed *= 1.2; // 20% 빨라짐
+    
+    // 기존 인스턴스들의 회전 반경도 업데이트
+    this.instances.forEach(instance => {
+      if (instance && instance.active) {
+        instance.rotationRadius = this.rotationRadius;
+      }
+    });
+  }
+}
+
+// 회전 무기 인스턴스
+export class SpinningWeaponInstance extends Phaser.GameObjects.Sprite {
+  constructor(scene, player, weaponKey, damage, rotationRadius, baseAngle) {
+    super(scene, 0, 0, weaponKey);
+    scene.add.existing(this);
+    
+    this.player = player;
+    this.damage = damage;
+    this.rotationRadius = rotationRadius;
+    this.baseAngle = baseAngle;
+    
+    this.setOrigin(0.5, 0.5);
+    this.setScale(0.03);
+    
+    // 데미지 적용 쿨다운
+    this.lastDamageTime = 0;
+    this.damageCooldown = 200; // 200ms 쿨다운
+  }
+
+  update(time, rotationSpeed, currentAngle) {
+    // 플레이어 주변 회전 위치 계산
+    const x = this.player.x + Math.cos(currentAngle) * this.rotationRadius;
+    const y = this.player.y + Math.sin(currentAngle) * this.rotationRadius;
+    
+    // 위치 설정
+    this.x = x;
+    this.y = y;
+    
+    // 몬스터와의 충돌 체크 및 데미지 적용
+    if (time - this.lastDamageTime > this.damageCooldown) {
+      const monsters = this.scene.monsters?.getChildren?.() || [];
+      let hitMonster = false;
+      
+      monsters.forEach(monster => {
+        if (monster.active) {
+          const distance = Phaser.Math.Distance.Between(this.x, this.y, monster.x, monster.y);
+          if (distance < 30) { // 충돌 범위
+            if (typeof monster.takeDamage === 'function') {
+              monster.takeDamage(this.damage);
+              hitMonster = true;
+            }
+          }
+        }
+      });
+      
+      if (hitMonster) {
+        this.lastDamageTime = time;
+      }
+    }
+  }
+}
+
+// AirPods 무기
+export class AirPods extends SpinningWeapon {
+  constructor(scene, player) {
+    super(scene, player, 'airpods', 1000, 100);
+    this.rotationSpeed = 2.5; // AirPods는 조금 더 빠르게 회전
+  }
+
+  upgrade() {
+    super.upgrade();
+    // AirPods 특별 업그레이드: 회전 반경 증가
+    this.rotationRadius = Math.floor(this.rotationRadius * 1.1); // 10% 증가
+    
+    // 기존 인스턴스들의 회전 반경도 업데이트
+    this.instances.forEach(instance => {
+      if (instance && instance.active) {
+        instance.rotationRadius = this.rotationRadius;
+      }
+    });
+  }
+}
+
 // 경험치 오브젝트는 Exp.js에서 관리

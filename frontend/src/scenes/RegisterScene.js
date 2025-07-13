@@ -12,10 +12,8 @@ export default class RegisterScene extends Phaser.Scene {
       fill: '#ffffff'
     }).setOrigin(0.5);
 
-    // ✏️ 입력창 생성
-    this.createInput(width / 2 - 100, 120, 'user_id', '아이디');
-    this.createInput(width / 2 - 100, 180, 'password', '비밀번호');
-    this.createInput(width / 2 - 100, 240, 'nickname', '닉네임');
+    // ✏️ 입력창 DOM 생성 (기존 createInput 전부 제거)
+    this.createRegisterForm();
 
     // ✅ [회원가입 완료] 버튼
     const registerBtn = this.add.text(width / 2, 310, '[✅ 회원가입 완료]', {
@@ -58,24 +56,45 @@ export default class RegisterScene extends Phaser.Scene {
     });
   }
 
-  createInput(x, y, id, placeholder) {
-    const input = document.createElement('input');
-    input.type = id === 'password' ? 'password' : 'text';
-    input.id = id;
-    input.placeholder = placeholder;
-    input.style.position = 'absolute';
-    input.style.left = `${x}px`;
-    input.style.top = `${y}px`;
-    input.style.width = '200px';
-    input.style.fontSize = '18px';
-    document.body.appendChild(input);
+  // ✅ 회원가입 입력 폼 DOM 요소 생성
+  createRegisterForm() {
+    const wrapper = document.createElement('div');
+    wrapper.id = 'register-wrapper';
+    wrapper.innerHTML = `
+      <style>
+        #register-wrapper {
+          position: fixed;
+          top: 120px;
+          left: 50%;
+          transform: translateX(-50%);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 10px;
+        }
+
+        #register-wrapper input {
+          width: 80vw;            /* 📱 반응형 너비 */
+          max-width: 300px;       /* 💻 최대 너비 제한 */
+          padding: 10px;
+          font-size: 16px;
+          border-radius: 5px;
+          border: none;
+          box-sizing: border-box; /* ✅ 패딩 포함 너비 계산 */
+        }
+      </style>
+
+      <input type="text" id="user_id" placeholder="아이디" />
+      <input type="password" id="password" placeholder="비밀번호" />
+      <input type="text" id="nickname" placeholder="닉네임" />
+    `;
+    document.body.appendChild(wrapper);
   }
 
+  // 🧹 씬 전환 시 DOM 정리
   shutdown() {
-    ['user_id', 'password', 'nickname'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.remove();
-    });
+    const wrapper = document.getElementById('register-wrapper');
+    if (wrapper) wrapper.remove();
   }
 
   onShutdown() { this.shutdown(); }

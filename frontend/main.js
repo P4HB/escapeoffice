@@ -9,6 +9,7 @@ import RegisterScene from './src/scenes/RegisterScene.js';
 
 
 
+
 const config = {
   type: Phaser.AUTO,
   width: window.innerWidth,
@@ -29,4 +30,5 @@ const config = {
 };
 
 new Phaser.Game(config);
+
 

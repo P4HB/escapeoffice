@@ -48,7 +48,7 @@ def get_ranking():
 # 기존 코드들과 함께...
 
 # 🔹 로그인 API 추가
-@user_bp.route('/api/login', methods=['POST'])  # ✅ OPTIONS 추가!
+@user_bp.route('/login', methods=['POST'])  # ✅ OPTIONS 추가!
 # @cross_origin(origin='http://127.0.0.1:5173', supports_credentials=True)  # ✅ CORS 허용!
 def login_user():
 
@@ -68,7 +68,7 @@ def login_user():
 
 
 # 🔹 회원가입 API 추가
-@user_bp.route('/api/register', methods=['POST'])  # ← 여기 핵심!
+@user_bp.route('/register', methods=['POST'])  # ← 여기 핵심!
 def register_user():
     data = request.get_json()
     user_id = data.get('user_id')

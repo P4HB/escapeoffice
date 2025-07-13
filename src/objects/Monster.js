@@ -22,6 +22,7 @@ export default class Monster extends Phaser.Physics.Arcade.Sprite {
 
     const stats = monsterStats[textureKey] || {hp: 5, speed:50, damage:1, scale : 0.2};
     this.hp = stats.hp;
+    this.maxHp = stats.hp; // 최대 HP 저장
     this.speed = stats.speed;
     this.damage = stats.damage;
     this.setScale(stats.scale);
@@ -36,6 +37,24 @@ export default class Monster extends Phaser.Physics.Arcade.Sprite {
     console.log('Monster position:', this.x, this.y);
 
     this.setCollideWorldBounds(true);
+
+    // HP 바용 Graphics와 텍스트 생성
+    this.hpBarBg = scene.add.graphics();
+    this.hpBar = scene.add.graphics();
+    this.hpText = scene.add.text(0, 0, '', {
+      fontSize: '10px', fill: '#fff', fontFamily: 'Arial', stroke: '#222', strokeThickness: 2
+    }).setOrigin(0.5, 1);
+    this.hpBarDepth = 1000;
+    this.hpBarBg.setDepth(this.hpBarDepth);
+    this.hpBar.setDepth(this.hpBarDepth);
+    this.hpText.setDepth(this.hpBarDepth);
+
+    // 몬스터가 destroy될 때 HP 바/텍스트도 같이 제거
+    this.on('destroy', () => {
+      if (this.hpBarBg) { this.hpBarBg.destroy(); this.hpBarBg = null; }
+      if (this.hpBar) { this.hpBar.destroy(); this.hpBar = null; }
+      if (this.hpText) { this.hpText.destroy(); this.hpText = null; }
+    });
   }
 
   update() {
@@ -46,12 +65,32 @@ export default class Monster extends Phaser.Physics.Arcade.Sprite {
       // 멈춘 상태에서는 속도를 0으로 유지
       this.body.setVelocity(0, 0);
     }
+    // HP 바 위치/길이/텍스트 갱신
+    const barWidth = this.body.width * this.scaleX * 5; // 훨씬 더 넓게
+    const barHeight = 4; // 얇게
+    const barX = this.x - barWidth / 2;
+    const barY = this.y - this.body.height * this.scaleY * 1.2 - 24; // 몬스터 이미지보다 훨씬 위
+    // 배경
+    this.hpBarBg.clear();
+    this.hpBarBg.fillStyle(0x444444, 1);
+    this.hpBarBg.fillRect(barX, barY, barWidth, barHeight);
+    // 남은 HP
+    const hpRatio = Math.max(0, this.hp / this.maxHp);
+    this.hpBar.clear();
+    this.hpBar.fillStyle(0x33ff33, 1);
+    this.hpBar.fillRect(barX, barY, barWidth * hpRatio, barHeight);
+    // HP 수치 텍스트
+    this.hpText.setText(`${Math.max(0, Math.round(this.hp))}`);
+    this.hpText.setPosition(this.x, barY - 2);
   }
 
   takeDamage(amount) {
     this.hp -= amount;
     if (this.hp <= 0) {
       this.die();
+    } else {
+      // HP 바 갱신
+      this.update();
     }
   }
 
@@ -71,6 +110,10 @@ export default class Monster extends Phaser.Physics.Arcade.Sprite {
     if (this.scene.exps) {
       this.scene.exps.add(exp);
     }
+    // HP 바/텍스트 제거 (중복 방지)
+    if (this.hpBarBg) { this.hpBarBg.destroy(); this.hpBarBg = null; }
+    if (this.hpBar) { this.hpBar.destroy(); this.hpBar = null; }
+    if (this.hpText) { this.hpText.destroy(); this.hpText = null; }
     this.destroy();
   }
 

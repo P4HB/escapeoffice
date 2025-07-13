@@ -120,6 +120,7 @@ export default class GameScene extends Phaser.Scene {
     // 무기 UI 그룹 생성
     this.weaponUIImages = [];
     this.weaponUIBoxes = [];
+    this.weaponUILevelTexts = [];
     this.weaponUIText = null;
     this.drawWeaponUI();
   }
@@ -273,20 +274,27 @@ handleBulletMonsterCollision(bullet,monster){
       const bombX = bomb.x;
       const bombY = bomb.y;
       
+      console.log(`💥 폭탄 폭발! 위치: (${bombX}, ${bombY}), 범위: ${explosionRadius}, 데미지: ${bomb.damage}`);
+      
+      let hitCount = 0;
       this.monsters.getChildren().forEach(targetMonster => {
         if (targetMonster.active) {
           const distance = Phaser.Math.Distance.Between(bombX, bombY, targetMonster.x, targetMonster.y);
           if (distance <= explosionRadius) {
+            console.log(`🎯 몬스터 피격! 거리: ${distance.toFixed(1)}, 몬스터 HP: ${targetMonster.hp} -> ${targetMonster.hp - (bomb.damage || 30)}`);
             if (typeof targetMonster.takeDamage === 'function') {
               targetMonster.takeDamage(bomb.damage || 30);
+              hitCount++;
             }
           }
         }
       });
       
-      // 폭발 이펙트 (간단한 원형 그래픽)
-      const explosion = this.add.circle(bombX, bombY, explosionRadius, 0xff0000, 0.3)
-        .setScrollFactor(0);
+      console.log(`💥 폭발 완료! 총 ${hitCount}마리 피격`);
+      
+      // 폭발 이펙트 (실제 폭발 반경과 정확히 일치)
+      const explosion = this.add.circle(bombX, bombY, explosionRadius, 0xff0000, 0.2)
+        .setStrokeStyle(2, 0xff4444, 0.8);
       
       // 폭발 이펙트 페이드아웃
       this.tweens.add({
@@ -319,6 +327,8 @@ handleBulletMonsterCollision(bullet,monster){
     this.weaponUIImages = [];
     this.weaponUIBoxes.forEach(box => box.destroy());
     this.weaponUIBoxes = [];
+    this.weaponUILevelTexts.forEach(text => text.destroy());
+    this.weaponUILevelTexts = [];
     if (this.weaponUIText) { this.weaponUIText.destroy(); this.weaponUIText = null; }
     // 인벤토리 UI 위치/크기
     const { width, height } = this.scale;
@@ -347,6 +357,28 @@ handleBulletMonsterCollision(bullet,monster){
           const y = inventoryY + boxPadding + iconSize/2;
           const img = this.add.image(x, y, weaponKey).setScrollFactor(0).setDisplaySize(iconSize-8, iconSize-8);
           this.weaponUIImages.push(img);
+          
+          // 무기 레벨 표시 (인벤토리 박스의 위쪽 바깥쪽)
+          const weapon = this.player.obtainedWeapons[weaponKey];
+          if (weapon && weapon.level) {
+            // 인벤토리 박스의 위치 계산
+            const boxX = inventoryX + boxPadding + idx * (iconSize + boxPadding) + iconSize/2;
+            const boxY = inventoryY + boxPadding + iconSize/2;
+            
+            // 레벨 텍스트 위치 (인벤토리 박스의 위쪽 바깥쪽)
+            const levelX = boxX + iconSize/2 - 8; // 인벤토리 박스 오른쪽 끝에서 약간 안쪽
+            const levelY = boxY - iconSize/2 - 8; // 인벤토리 박스 위쪽 바깥쪽
+            
+            // 레벨 텍스트
+            const levelText = this.add.text(levelX, levelY, `Lv.${weapon.level}`, {
+              fontSize: '12px',
+              fill: '#ffff00',
+              fontFamily: 'Arial',
+              stroke: '#000000',
+              strokeThickness: 2
+            }).setOrigin(1, 0).setScrollFactor(0);
+            this.weaponUILevelTexts.push(levelText);
+          }
         }
       });
     }

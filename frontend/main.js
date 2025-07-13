@@ -3,6 +3,8 @@ import GameScene from './src/scenes/GameScene.js'
 import ClearScene from './src/scenes/ClearScene.js';
 import MenuScene from './src/scenes/MenuScene.js';
 import GameOverScene from './src/scenes/GameOverScene.js';
+import LoginScene from './src/scenes/LoginScene.js';
+import RegisterScene from './src/scenes/RegisterScene.js';
 
 
 
@@ -23,7 +25,7 @@ const config = {
       debug: true
     }
   },
-  scene: [MenuScene, GameScene, ClearScene, GameOverScene]
+  scene: [LoginScene, MenuScene, GameScene, ClearScene, GameOverScene, RegisterScene]
 };
 
 new Phaser.Game(config);

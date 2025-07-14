@@ -11,10 +11,6 @@ export default class Monster extends Phaser.Physics.Arcade.Sprite {
 
     scene.add.existing(this);
     scene.physics.add.existing(this);
-    this.setScale(0.1);
-
-    this.setCollideWorldBounds(true);
-
 
     this.setOrigin(0.5, 0.5); // 중앙 정렬
     const monsterStats = {
@@ -31,13 +27,6 @@ export default class Monster extends Phaser.Physics.Arcade.Sprite {
     this.damage = stats.damage;
     this.setScale(stats.scale);
 
-    this.setCollideWorldBounds(true);
-  }
-
-  update() {
-    if (this.player && this.scene.physics.world) {
-      this.scene.physics.moveToObject(this, this.player, this.speed);
-    }
     // 콜라이더를 원본 이미지 테두리에 맞춤
     const tex = this.texture.getSourceImage();
     this.body.setSize(tex.width, tex.height);

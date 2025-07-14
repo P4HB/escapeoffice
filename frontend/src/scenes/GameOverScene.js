@@ -7,8 +7,9 @@ export default class GameOverScene extends Phaser.Scene {
     this.load.image('player', 'src/assets/images/Player.png');
   }
 
-  create() {
+  create(data) {
     const { width, height } = this.scale;
+    const gameOverReason = data?.reason || 'timeout'; // 기본값은 시간 초과
 
     this.cameras.main.setBackgroundColor('#1a1a1a');
 
@@ -17,10 +18,19 @@ export default class GameOverScene extends Phaser.Scene {
     const playerY = Math.min(height * 0.5, height - 160);
     const instructionY = Math.min(height * 0.75, height - 60);
 
-    // 타이틀
-    this.add.text(width / 2, titleY, '😭 야근 확정! 퇴근 실패 😭', {
+    // 타이틀 - 게임 오버 이유에 따라 다른 메시지
+    let titleText, titleColor;
+    if (gameOverReason === 'timeout') {
+      titleText = '⏰ 시간 초과! 퇴근 실패 ⏰';
+      titleColor = '#ffaa00';
+    } else {
+      titleText = '😭 야근 확정! 퇴근 실패 😭';
+      titleColor = '#ff4c4c';
+    }
+
+    this.add.text(width / 2, titleY, titleText, {
       fontSize: '36px',
-      fill: '#ff4c4c',
+      fill: titleColor,
       fontFamily: 'Arial Black',
       stroke: '#000000',
       strokeThickness: 5,

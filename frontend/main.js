@@ -9,6 +9,7 @@ import RegisterScene from './src/scenes/RegisterScene.js';
 
 
 
+import RexOutlinePipelinePlugin from 'phaser3-rex-plugins/plugins/outlinepipeline-plugin.js';
 
 const config = {
   type: Phaser.AUTO,
@@ -25,6 +26,15 @@ const config = {
       gravity: { y: 0 },
       debug: true
     }
+  },
+  plugins: {
+    global: [
+      {
+        key: 'rexOutlinePipeline',
+        plugin: RexOutlinePipelinePlugin,
+        start: true
+      }
+    ]
   },
   scene: [LoginScene, MenuScene, GameScene, ClearScene, GameOverScene, RegisterScene]
 };

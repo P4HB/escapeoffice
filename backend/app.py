@@ -20,7 +20,7 @@ CORS(app,
 Base.metadata.create_all(bind=engine)
 
 # ✅ 유저 관련 API들 등록
-app.register_blueprint(user_bp)
+app.register_blueprint(user_bp, url_prefix='/api')
 
 @app.route('/')
 def home():

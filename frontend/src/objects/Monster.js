@@ -105,7 +105,7 @@ export default class Monster extends Phaser.Physics.Arcade.Sprite {
       }
     }
     // 경험치 드랍 (체력에 비례, 최소 5)
-    const expAmount = Math.max(10, Math.round(this.hp * 0.7));
+    const expAmount = Math.max(10, Math.round(this.hp * 0.7*3));
     const exp = new ExpObject(this.scene, this.x, this.y, expAmount);
     if (this.scene.exps) {
       this.scene.exps.add(exp);

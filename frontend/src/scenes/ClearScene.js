@@ -1,14 +1,26 @@
+// ClearScene.js
 export default class ClearScene extends Phaser.Scene {
   constructor() {
     super({ key: 'ClearScene' });
   }
 
-  create() {
+  create(data) {
     const { width, height } = this.scale;
 
-    this.add.text(width / 2, height / 2 - 50, '🎉 퇴근 성공!! 🎉', {
+    const totalTime = data.clearTime || 0;
+    const minutes = Math.floor(totalTime / 60);
+    const seconds = Math.floor(totalTime % 60);
+
+    this.add.text(width / 2, height / 2 - 100, '🎉 퇴근 성공!! 🎉', {
       fontSize: '36px',
       fill: '#00ff00',
+      fontFamily: 'Arial',
+    }).setOrigin(0.5);
+
+    // ✅ 시간 표시 텍스트
+    this.add.text(width / 2, height / 2 - 40, `총 소요 시간: ${minutes}분 ${seconds}초`, {
+      fontSize: '24px',
+      fill: '#ffffff',
       fontFamily: 'Arial',
     }).setOrigin(0.5);
 

@@ -7,6 +7,8 @@ import { ExpObject } from '../objects/Exp.js';
 import { DroppedUsableItem, Sajikseo } from '../objects/usableitems.js';
 import WeaponSwapModal from '../ui/WeaponSwapModal.js';
 import WeaponUpgradeModal from '../ui/WeaponUpgradeModal.js';
+import Boss from '../objects/Boss.js';
+
 
 const WEAPON_IMAGE_KEYS = ['coffee', 'usb', 'mouse', 'bomb', 'airpods'];
 
@@ -35,6 +37,8 @@ export default class GameScene extends Phaser.Scene {
     this.load.image('map2', '/src/assets/map/map2.png');
     this.load.image('map3','/src/assets/map/map3.png');
     this.load.image('exp', 'src/assets/images/exp.png');
+    this.load.image('boss', '/src/assets/boss/boss.png');
+
   }
 
   create() {
@@ -157,9 +161,22 @@ export default class GameScene extends Phaser.Scene {
     this.weaponUIText = null;
     this.drawWeaponUI();
     this.drawUsableItemUI();
+
+
+    this.bossSpawned = false;
+    this.bossGroup = this.physics.add.group(); // 보스 전용 그룹
+
+
+
+    //충돌 등록 ⭐⭐ 요기!
+  this.physics.add.overlap(this.player, this.monsters, this.handlePlayerHit, null, this);
+  this.physics.add.overlap(this.player, this.boss, this.handlePlayerHit, null, this);
+
+
+
   }
 
-handleBulletMonsterCollision(bullet,monster){
+  handleBulletMonsterCollision(bullet,monster){ 
     // 모달이 열려있으면 총알 충돌 처리 안함
     if (this.isPausedForWeaponSwap || this.isPausedForWeaponUpgrade) return;
     
@@ -167,7 +184,7 @@ handleBulletMonsterCollision(bullet,monster){
         monster.takeDamage(bullet.damage);
         bullet.destroy();
     }
-}
+  }
 
   update(time,delta) {
     if (this.isPausedForWeaponSwap || this.isPausedForWeaponUpgrade) {
@@ -217,6 +234,14 @@ handleBulletMonsterCollision(bullet,monster){
         item.update(time);
       }
     });
+
+
+    if (!this.bossSpawned && this.player.level >= 2) {
+      this.spawnBoss();
+      this.bossSpawned = true;
+    }
+
+
   }
   
   drawColliders() {
@@ -262,22 +287,27 @@ handleBulletMonsterCollision(bullet,monster){
 
   }
 
-  handlePlayerHit(player, monster) {
-    // 모달이 열려있으면 충돌 처리 안함
-    if (this.isPausedForWeaponSwap || this.isPausedForWeaponUpgrade) return;
-    
-    console.log('⚠️ 충돌 발생!');
+  handlePlayerHit(player, target) {
+  // ⭐ 이미 무적 상태면 아무 일도 안 일어남
+  if (player.isInvincible) return;
 
-    this.remainingMinutes += 10; // ✅ 10분 누적!
-
-    // 일단 테스트용으로 몬스터 제거만 해보자
-    monster.destroy();
-
-    const totalMinutes = this.baseHour * 60 + this.remainingMinutes;
-    if (totalMinutes >= 20 * 60) {
-      this.scene.start('GameOverScene', { reason: 'collision' });
-    }
+  // 💥 보스는 제거하지 않도록 예외 처리
+  if (target instanceof Boss) {
+    console.log('❗ 보스 충돌 - 제거하지 않음');
+    this.remainingMinutes += 10; // 시간 패널티
+    player.setInvincible(); // ⭐ 무적 상태 부여
+    return;
   }
+
+  // 💥 일반 몬스터와 충돌 시 처리
+  player.setInvincible(); // ⭐ 무적 상태 부여
+  // 여기에서 체력 깎는 로직이 있다면 추가 (예: player.hp -= target.damage)
+  console.log('😵 플레이어 피격!');
+}
+
+
+
+
 
   handleWeaponPickup(player, weaponSprite) {
     // 모달이 열려있으면 무기 획득 처리 안함
@@ -368,7 +398,7 @@ handleBulletMonsterCollision(bullet,monster){
 
     
     if (player && expSprite && expSprite.amount) {
-      player.gainExp(expSprite.amount);
+      player.gainExp(expSprite.amount * 3);
       expSprite.destroy();
     }
   }
@@ -581,4 +611,19 @@ handleBulletMonsterCollision(bullet,monster){
       this.physics.world.resume();
     });
   }
+
+
+  spawnBoss() {
+  const x = this.player.x + 300;
+  const y = this.player.y + 300;
+  const boss = new Boss(this, x, y, this.player);
+  this.bossGroup.add(boss);
+
+  this.physics.add.overlap(this.bullets, this.bossGroup, this.handleBulletMonsterCollision, null, this);
+  this.physics.add.overlap(this.player, this.bossGroup, this.handlePlayerHit, null, this);
+
+  console.log('👹 보스 등장!');
+}
+
+
 }

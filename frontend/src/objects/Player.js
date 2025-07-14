@@ -40,7 +40,23 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     // 경험치/레벨 UI
     this.createExpUI()
     this.updateExpUI();
+
+    this.isInvincible = false; // ⭐ 무적 상태 여부
+
   }
+
+// ⭐ 무적 상태 부여 메서드
+  setInvincible(duration = 5000) {
+    this.isInvincible = true;
+    this.setAlpha(0.5); // 시각적 효과 (투명)
+
+    // 일정 시간 후 다시 무적 해제
+    this.scene.time.delayedCall(duration, () => {
+      this.isInvincible = false;
+      this.setAlpha(1);
+    });
+  }
+
 
   update(time, cursors) {
     // 획득한 무기만 발사

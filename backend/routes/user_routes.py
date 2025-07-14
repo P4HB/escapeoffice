@@ -9,6 +9,8 @@ from db_config import SessionLocal
 
 from flask_cors import cross_origin  # 🔥 이거 파일 맨 위에 추가해줘!
 
+from sqlalchemy import asc  # 최상단 import에 추가
+
 
 # Blueprint: 여러 API들을 하나로 묶는 Flask 기능
 user_bp = Blueprint('user', __name__)
@@ -34,15 +36,21 @@ def submit_score():
     db.commit()  # 저장
     return jsonify({'message': 'Score recorded'})  # 응답 메시지
 
+
+
+
 # 🔸 [GET] 전체 사용자 랭킹 조회 API
 @user_bp.route('/ranking', methods=['GET'])
+@cross_origin()
 def get_ranking():
-    db = SessionLocal()  # DB 연결
-    users = db.query(User).order_by(User.score.desc()).all()  # 점수 높은 순 정렬
+    db = SessionLocal()
+    users = db.query(User)\
+              .filter(User.score > 0)\
+              .order_by(asc(User.score))\
+              .all()
 
-    # JSON 형태로 랭킹 리스트 만들기
     ranking = [{'user_id': u.user_id, 'score': u.score} for u in users]
-    return jsonify(ranking)  # 프론트로 랭킹 전송
+    return jsonify(ranking)
 
 
 # 기존 코드들과 함께...

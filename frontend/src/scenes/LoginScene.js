@@ -34,6 +34,10 @@ export default class LoginScene extends Phaser.Scene {
         .then(data => {
           if (data.success) {
             alert('✅ 로그인 성공!');
+
+             // 👉 여기서 localStorage에 user_id 저장하기!
+             localStorage.setItem('user_id', user_id);
+            
             this.shutdown();
             this.scene.start('MenuScene');
           } else {

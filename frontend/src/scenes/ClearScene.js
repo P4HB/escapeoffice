@@ -29,6 +29,28 @@ export default class ClearScene extends Phaser.Scene {
       fill: '#ffffff',
     }).setOrigin(0.5);
 
+    console.log('서버로 보내는 점수:', totalTime);
+
+
+  // ✅ 점수 서버로 전송
+      fetch('http://127.0.0.1:5000/api/score', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_id: localStorage.getItem('user_id'),  // 또는 this.registry.get('user_id')
+        score: totalTime
+      })
+    })
+    .then(res => res.json())
+    .then(data => console.log('✅ 점수 저장 완료:', data))
+    .catch(err => console.error('❌ 점수 저장 실패:', err));
+
+
+
+
+
+      // ✅ 다시 시작 키 입력
+
     this.input.keyboard.once('keydown-SPACE', () => {
       this.scene.start('MenuScene');
     });

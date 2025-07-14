@@ -9,7 +9,7 @@ export default class MenuScene extends Phaser.Scene {
   }
 
   create() {
-    const { width } = this.scale;
+    const { width, height } = this.scale; // ✅ 이 줄 추가!
     const realHeight = window.innerHeight; // 실제 브라우저 높이 기준
 
     this.cameras.main.setBackgroundColor('#2e2e2e');
@@ -17,7 +17,7 @@ export default class MenuScene extends Phaser.Scene {
     // 위치 계산 (안전 범위 포함)
     const titleY = Math.max(realHeight * 0.1, 50);
     const playerY = Math.min(realHeight * 0.45, realHeight - 150);
-    const instructionY = Math.min(realHeight * 0.75, realHeight - 60);
+    const instructionY = Math.min(realHeight * 0.85, realHeight - 40);
 
     // 타이틀 텍스트
     this.add.text(width / 2, titleY, '💼 탈출 오피스 💼', {
@@ -53,5 +53,31 @@ export default class MenuScene extends Phaser.Scene {
     this.input.keyboard.once('keydown-SPACE', () => {
       this.scene.start('GameScene');
     });
+
+
+  // ✅ 랭킹 버튼 추가
+  const rankingBtn = this.add.text(width / 2, height / 2 + 100, '[🏆 랭킹 보기]', {
+    fontSize: '24px',
+    fill: '#00ffff'
+  }).setOrigin(0.5);
+
+  rankingBtn.setInteractive().on('pointerdown', () => {
+    this.scene.start('RankingScene');
+  });
+
+
+  // 로그아웃 버튼 (여기에 추가)
+  const logoutBtn = this.add.text(width / 2, height / 2 + 150, '[🚪 로그아웃]', {
+    fontSize: '24px',
+    fill: '#ff5555',
+  }).setOrigin(0.5).setInteractive();
+
+  logoutBtn.on('pointerdown', () => {
+    localStorage.removeItem('user_id');
+    alert('로그아웃 되었습니다!');
+    this.scene.start('LoginScene');
+  });
+
+
   }
 }

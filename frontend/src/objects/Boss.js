@@ -1,14 +1,15 @@
 // objects/Boss.js
 import { ExpObject } from './Exp.js';
+import Monster from './Monster.js';
 
-export default class Boss extends Phaser.Physics.Arcade.Sprite {
+export default class Boss extends Monster {
   // ✨ 1. 생성자에 health와 damage 파라미터 추가
   constructor(scene, x, y, player, health = 700, damage = 50) {
-    super(scene, x, y, 'boss');
+    super(scene, x, y, player, 'boss','boss');
 
     this.scene = scene;
     this.player = player;
-    this.speed = 40;
+    this.speed = 5;
 
     // ✨ 2. 전달받은 값으로 보스 스펙 설정
     this.hp = health;
@@ -21,12 +22,13 @@ export default class Boss extends Phaser.Physics.Arcade.Sprite {
     this.setCollideWorldBounds(true);
     this.setScale(0.3);
 
-    // 콜라이더 설정
-    const tex = this.texture.getSourceImage();
-    this.body.setSize(tex.width, tex.height);
-    this.body.setOffset(0, 0);
+    
 
-    // 체력바용 Graphics와 텍스트 생성
+    // 콜라이더 설정
+    // const tex = this.texture.getSourceImage();
+    // this.body.setSize(tex.width * this.scaleX, tex.height * this.scaleY);
+    // this.body.setOffset(0, 0);
+
     this.hpBarBg = scene.add.graphics();
     this.hpBar = scene.add.graphics();
     this.hpText = scene.add.text(0, 0, '', {
@@ -56,7 +58,7 @@ export default class Boss extends Phaser.Physics.Arcade.Sprite {
   }
 
   updateHpBar() {
-    const barWidth = 500;
+    const barWidth = 300;
     const barHeight = 6;
     const barX = this.x - barWidth / 2;
     const barY = this.y - (this.displayHeight / 2) - 20;
@@ -77,6 +79,15 @@ export default class Boss extends Phaser.Physics.Arcade.Sprite {
   }
 
   takeDamage(amount) {
+    const currentTime = this.scene.time.now;
+    if (currentTime - this.lastHitTime < this.hitCooldown) {
+      return;
+    }
+    this.lastHitTime = currentTime;
+    this.setTint(0xff0000);
+    this.scene.time.delayedCall(200, () => {
+      this.clearTint(); // 1초 후 원래 색으로 복귀
+    });
     this.hp -= amount;
     if (this.hp <= 0) {
       this.die();

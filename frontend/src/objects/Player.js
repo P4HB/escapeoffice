@@ -43,12 +43,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 // ⭐ 무적 상태 부여 메서드
   setInvincible(duration = 1000) {    //무적 시간 
     this.isInvincible = true;
-    this.setAlpha(0.5); // 시각적 효과 (투명)
+    // this.setAlpha(0.5); // 시각적 효과 (투명)
 
     // 일정 시간 후 다시 무적 해제
     this.scene.time.delayedCall(duration, () => {
       this.isInvincible = false;
-      this.setAlpha(1);
+      // this.setAlpha(1);
     });
   }
 
@@ -91,6 +91,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
   // 레벨업
   levelUp() {
+    if(this.level >=22 ){
+      return;
+    }
     this.level += 1;
     // 무기 업그레이드 모달 띄우기
     if (this.scene && typeof this.scene.showWeaponUpgradeModal === 'function') {

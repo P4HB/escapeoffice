@@ -18,6 +18,7 @@ export default class Monster extends Phaser.Physics.Arcade.Sprite {
       gwajang: {hp:30, speed:40, damage : 4, scale : 0.15},
       file : {hp:3, speed:50, damage :1, scale: 0.08},
       bogoseo : {hp:3, speed:50, damage :1, scale: 0.08},
+      boss: {hp: 2000, speed: 5, damage: 20, scale: 0.3} // ✅ 이거 추가!
     };
 
     const stats = monsterStats[textureKey] || {hp: 5, speed:50, damage:1, scale : 0.2};
@@ -26,6 +27,9 @@ export default class Monster extends Phaser.Physics.Arcade.Sprite {
     this.speed = stats.speed;
     this.damage = stats.damage;
     this.setScale(stats.scale);
+
+    this.lastHitTime = 0;
+    this.hitCooldown = 200;
 
     // 콜라이더를 원본 이미지 테두리에 맞춤
     switch (textureKey) {
@@ -44,6 +48,9 @@ export default class Monster extends Phaser.Physics.Arcade.Sprite {
       case 'bogoseo':
         this.body.setSize(730, 807);     // 80% of 913x1009
         this.body.setOffset(194, 110);   // 중앙 유지
+        break;
+      case 'boss':
+        this.body.setSize(this.width, this.height);
         break;
       default:
         const tex = this.texture.getSourceImage();
@@ -74,6 +81,8 @@ export default class Monster extends Phaser.Physics.Arcade.Sprite {
 
   update() {
     // 휴가신청서 효과로 멈춘 상태가 아니면 움직임
+
+    if(!this.active) return;
     if (!this.isStunned && this.player && this.scene.physics.world) {
       this.scene.physics.moveToObject(this, this.player, this.speed);
     } else if (this.isStunned) {
@@ -100,8 +109,13 @@ export default class Monster extends Phaser.Physics.Arcade.Sprite {
   }
 
   takeDamage(amount) {
+    const currentTime = this.scene.time.now;
+    if (currentTime - this.lastHitTime < this.hitCooldown) {
+      return;
+    }
+    this.lastHitTime = currentTime;
     this.setTint(0xff0000);
-    this.scene.time.delayedCall(100, () => {
+    this.scene.time.delayedCall(200, () => {
       this.clearTint(); // 1초 후 원래 색으로 복귀
     });
     this.hp -= amount;

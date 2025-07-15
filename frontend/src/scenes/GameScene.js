@@ -92,6 +92,7 @@ export default class GameScene extends Phaser.Scene {
     this.bombs = this.physics.add.group();
     this.exps = this.physics.add.group();
     this.usableItems = this.physics.add.group();
+    this.spinningWeapons = this.physics.add.group();
 
     this.monsterSpawnTimer1 = this.time.addEvent({
         delay: 200,
@@ -126,14 +127,20 @@ export default class GameScene extends Phaser.Scene {
 
     this.cameras.main.startFollow(this.player);
     this.monsters = this.physics.add.group({ classType : Monster, runChildUpdate : true });
-    this.bossGroup = this.physics.add.group();
+    // this.bossGroup = this.physics.add.group();
 
 
 
 
     this.physics.add.overlap(this.player, this.monsters, this.handlePlayerHit, null, this);
     this.physics.add.overlap(this.bullets, this.monsters, this.handleBulletMonsterCollision, null, this);
-    
+    this.physics.add.overlap(
+      this.spinningWeapons, 
+      this.monsters,   
+      this.handleSpinningWeaponHit, 
+      null, 
+      this  
+    );
     this.monsterSpawnTimer2 = this.time.addEvent({
         delay: 2000,
         loop: true,
@@ -151,7 +158,7 @@ export default class GameScene extends Phaser.Scene {
 
     this.physics.add.overlap(this.player, this.weapons, this.handleWeaponPickup, null, this);
     this.physics.add.overlap(this.monsters, this.bombs, this.handleBombHit, null, this);
-    this.physics.add.overlap(this.bossGroup, this.bombs, this.handleBombHit, null, this);
+    // this.physics.add.overlap(this.bossGroup, this.bombs, this.handleBombHit, null, this);
     this.physics.add.overlap(this.player, this.exps, this.handleExpPickup, null, this);
     this.physics.add.overlap(this.player, this.usableItems, this.handleUsableItemPickup, null, this);
 
@@ -170,6 +177,16 @@ export default class GameScene extends Phaser.Scene {
     if(monster && bullet.damage !== undefined){
         monster.takeDamage(bullet.damage);
         bullet.destroy();
+    }
+  }
+
+  handleSpinningWeaponHit(weaponInstance, monster) {
+    if (!monster.active || !weaponInstance.active) {
+      return;
+    }
+    
+    if (typeof monster.takeDamage === 'function') {
+      monster.takeDamage(weaponInstance.damage);
     }
   }
 
@@ -216,7 +233,7 @@ export default class GameScene extends Phaser.Scene {
   startBossChatSequence() {
     this.isChattingWithKim = true;
     console.log("🤖 거래처 김대리와의 대화를 시작합니다...");
-
+    this.input.keyboard.enabled = false;   
     this.physics.world.pause();
     this.monsterSpawnTimer1.paused = true;
     this.monsterSpawnTimer2.paused = true;
@@ -278,7 +295,36 @@ export default class GameScene extends Phaser.Scene {
     const inputField = chatForm.getChildByName('playerInput');
     if (inputField) {
       inputField.focus();
+
+      inputField.addEventListener('focus', () => {
+        this.input.keyboard.enabled = false;
+      });
+    
+      inputField.addEventListener('blur', () => {
+        this.input.keyboard.enabled = true;
+      });
+    
+      inputField.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          const value = inputField.value.trim();
+          if (value !== '') {
+            this.handlePlayerMessage(value);
+            inputField.value = '';
+          }
+        }
+      });
     }
+    inputField.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault(); // 폼 전송 방지
+        const value = inputField.value.trim();
+        if (value !== '') {
+          this.handlePlayerMessage(value);
+          inputField.value = '';
+        }
+      }
+    });
   }
 
   // ✅ 5. 직접 참조를 사용하는 appendMessageToLog 함수
@@ -348,7 +394,7 @@ export default class GameScene extends Phaser.Scene {
   endChatAndSpawnBoss() {
     console.log(`👹 대화 종료! 최종 기분 점수: ${this.kimDaeRiMood}. 이 점수로 보스를 소환합니다.`);
     this.isChattingWithKim = false;
-
+    this.input.keyboard.enabled = true;   
     this.chatUIElements.forEach(element => element.destroy());
     
     this.chatUIElements = [];
@@ -383,10 +429,11 @@ export default class GameScene extends Phaser.Scene {
     console.log(`👹 보스 스펙 - 체력: ${bossHealth}, 공격력: ${bossDamage}`);
 
     const boss = new Boss(this, x, y, this.player, bossHealth, bossDamage);
-    this.bossGroup.add(boss);
-
-    this.physics.add.overlap(this.bullets, this.bossGroup, this.handleBulletMonsterCollision, null, this);
-    this.physics.add.overlap(this.player, this.bossGroup, this.handlePlayerHit, null, this);
+    // this.bossGroup.add(boss);
+    this.boss=boss;
+    this.monsters.add(this.boss);
+    // this.physics.add.overlap(this.bullets, this.bossGroup, this.handleBulletMonsterCollision, null, this);
+    // this.physics.add.overlap(this.player, this.bossGroup, this.handlePlayerHit, null, this);
 
     console.log('👹 거래처 사장(보스) 등장!');
   }
@@ -422,11 +469,19 @@ export default class GameScene extends Phaser.Scene {
     console.log('❗ 보스 충돌 - 제거하지 않음');
     this.remainingMinutes += 10;
     player.setInvincible();
+    player.setTint(0xffa0000);
+    this.time.delayedCall(1000, () => {
+      player.clearTint(); // 1초 후 원래 색으로 복귀
+    });
   } else {
     // 💥 일반 몬스터 충돌 시
     console.log('😵 플레이어 피격!');
     this.remainingMinutes += 10; // ✅ 이 줄이 없었음!!
     player.setInvincible();
+    player.setTint(0xff0000);
+    this.time.delayedCall(1000, () => {
+      player.clearTint(); // 1초 후 원래 색으로 복귀
+    });
   }
 
   // ⛔ 60분 이상 누적 시 게임 오버
@@ -489,16 +544,16 @@ export default class GameScene extends Phaser.Scene {
       });
 
       // ✅ 보스 데미지 처리 추가!
-      this.bossGroup.getChildren().forEach(boss => {
-        if (boss.active) {
-          const distance = Phaser.Math.Distance.Between(bombX, bombY, boss.x, boss.y);
-          if (distance <= explosionRadius && typeof boss.takeDamage === 'function') {
-            console.log(`👹 보스 피격! 거리: ${distance.toFixed(1)}, HP: ${boss.hp} -> ${boss.hp - (bomb.damage || 30)}`);
-            boss.takeDamage(bomb.damage || 30);
-            hitCount++;
-          }
-        }
-      });
+      // this.bossGroup.getChildren().forEach(boss => {
+      //   if (boss.active) {
+      //     const distance = Phaser.Math.Distance.Between(bombX, bombY, boss.x, boss.y);
+      //     if (distance <= explosionRadius && typeof boss.takeDamage === 'function') {
+      //       console.log(`👹 보스 피격! 거리: ${distance.toFixed(1)}, HP: ${boss.hp} -> ${boss.hp - (bomb.damage || 30)}`);
+      //       boss.takeDamage(bomb.damage || 30);
+      //       hitCount++;
+      //     }
+      //   }
+      // });
 
       console.log(`💥 폭발 완료! 총 ${hitCount}마리 피격`);
 

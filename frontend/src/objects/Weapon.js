@@ -315,7 +315,9 @@ export class SpinningWeaponInstance extends Phaser.GameObjects.Sprite {
   constructor(scene, player, weaponKey, damage, rotationRadius, baseAngle) {
     super(scene, 0, 0, weaponKey);
     scene.add.existing(this);
-    
+    scene.physics.add.existing(this);
+    scene.spinningWeapons.add(this);
+    this.body.setAllowGravity(false);
     this.player = player;
     this.damage = damage;
     this.rotationRadius = rotationRadius;
@@ -324,9 +326,10 @@ export class SpinningWeaponInstance extends Phaser.GameObjects.Sprite {
     this.setOrigin(0.5, 0.5);
     this.setScale(0.03);
     
+    this.body.setCircle(this.width/2);  
     // 데미지 적용 쿨다운
     this.lastDamageTime = 0;
-    this.damageCooldown = 200; // 200ms 쿨다운
+    this.damageCooldown = 1000; // 200ms 쿨다운
   }
 
   update(time, rotationSpeed, currentAngle) {
@@ -339,33 +342,33 @@ export class SpinningWeaponInstance extends Phaser.GameObjects.Sprite {
     this.y = y;
     
     // 몬스터와의 충돌 체크 및 데미지 적용
-    if (time - this.lastDamageTime > this.damageCooldown) {
-      const monsters = this.scene.monsters?.getChildren?.() || [];
-      let hitMonster = false;
+    // if (time - this.lastDamageTime > this.damageCooldown) {
+    //   const monsters = this.scene.monsters?.getChildren?.() || [];
+    //   let hitMonster = false;
       
-      monsters.forEach(monster => {
-        if (monster.active) {
-          const distance = Phaser.Math.Distance.Between(this.x, this.y, monster.x, monster.y);
-          if (distance < 30) { // 충돌 범위
-            if (typeof monster.takeDamage === 'function') {
-              monster.takeDamage(this.damage);
-              hitMonster = true;
-            }
-          }
-        }
-      });
+    //   monsters.forEach(monster => {
+    //     if (monster.active) {
+    //       const distance = Phaser.Math.Distance.Between(this.x, this.y, monster.x, monster.y);
+    //       if (distance < 30) { // 충돌 범위
+    //         if (typeof monster.takeDamage === 'function') {
+    //           monster.takeDamage(this.damage);
+    //           hitMonster = true;
+    //         }
+    //       }
+    //     }
+    //   });
       
-      if (hitMonster) {
-        this.lastDamageTime = time;
-      }
-    }
+    //   if (hitMonster) {
+    //     this.lastDamageTime = time;
+    //   }
+    // }
   }
 }
 
 // Typing 무기
 export class Typing extends SpinningWeapon {
   constructor(scene, player) {
-    super(scene, player, 'typing', 1000, 120);
+    super(scene, player, 'typing', 5, 120);
     this.rotationSpeed = 2.5; // Typing는 조금 더 빠르게 회전
   }
 

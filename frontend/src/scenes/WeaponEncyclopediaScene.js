@@ -9,6 +9,11 @@ export default class WeaponEncyclopediaScene extends Phaser.Scene {
       this.load.image('bomb', '/src/assets/weapon/printer.png');
       this.load.image('mouse', '/src/assets/weapon/mouse.png');
       this.load.image('typing', '/src/assets/weapon/typing.png');
+      this.load.image('coffee_max', '/src/assets/weapon/coffee_max.png');
+      this.load.image('usb_max', '/src/assets/weapon/usb_max.png');
+      this.load.image('bomb_max', '/src/assets/weapon/printer_max.png');
+      this.load.image('mouse_max', '/src/assets/weapon/mouse_max.png');
+      this.load.image('typing_max', '/src/assets/weapon/typing_max.png');
     }
   
     create() {
@@ -77,36 +82,56 @@ export default class WeaponEncyclopediaScene extends Phaser.Scene {
     }
   
     createWeaponEntry(y, weapon) {
-      const centerX = this.scale.width / 2;
-  
-      this.add.image(centerX - 200, y, weapon.key)
-        .setDisplaySize(48, 48)
-        .setOrigin(0.5);
-  
-      this.add.text(centerX - 140, y - 18, weapon.name, {
-        fontSize: '20px',
-        fill: '#ffffff',
-        fontFamily: 'Arial Black'
-      }).setOrigin(0, 0.5);
-  
-      this.add.text(centerX, y - 18, `종류: ${weapon.type}`, {
-        fontSize: '16px',
-        fill: '#aaaaaa',
-        fontFamily: 'Arial'
-      }).setOrigin(0, 0.5);
-  
-      this.add.text(centerX + 160, y - 18, `데미지: ${weapon.damage}`, {
-        fontSize: '16px',
-        fill: '#ffaaaa',
-        fontFamily: 'Arial'
-      }).setOrigin(0, 0.5);
-  
-      this.add.text(centerX - 140, y + 16, weapon.description, {
-        fontSize: '15px',
-        fill: '#cccccc',
-        fontFamily: 'Arial'
-      }).setOrigin(0, 0.5);
-    }
+        const centerX = this.scale.width / 2;
+      
+        const leftImageX = centerX - 440;     // 🔹 이미지 더 왼쪽
+        const leftTextX = centerX - 380;      // 🔹 이름 + 설명도 더 왼쪽
+        const rightImageX = centerX + 160;
+        const rightTextX = centerX + 200;
+        // 왼쪽 - 기본 무기
+        this.add.image(leftImageX, y, weapon.key)
+          .setDisplaySize(48, 48)
+          .setOrigin(0.5);
+      
+        this.add.text(leftTextX, y - 18, weapon.name, {
+          fontSize: '20px',
+          fill: '#ffffff',
+          fontFamily: 'Arial Black'
+        }).setOrigin(0, 0.5);
+      
+        this.add.text(leftTextX, y + 16, weapon.description, {
+          fontSize: '15px',
+          fill: '#cccccc',
+          fontFamily: 'Arial'
+        }).setOrigin(0, 0.5);
+      
+        // 가운데 - 화살표
+        this.add.text(centerX, y, '➡ 최종 진화', {
+          fontSize: '18px',
+          fill: '#888888',
+          fontStyle: 'italic'
+        }).setOrigin(0.5);
+      
+        // 오른쪽 - 진화 무기
+        this.add.image(rightImageX, y, weapon.key + '_max')
+          .setDisplaySize(48, 48)
+          .setOrigin(0.5);
+      
+        this.add.text(rightTextX, y - 18, weapon.name + ' MAX', {
+          fontSize: '20px',
+          fill: '#aaffaa',
+          fontFamily: 'Arial Black'
+        }).setOrigin(0, 0.5);
+      
+        this.add.text(rightTextX, y + 16, '최종 업그레이드 상태', {
+          fontSize: '15px',
+          fill: '#aaaaaa',
+          fontFamily: 'Arial'
+        }).setOrigin(0, 0.5);
+      }
+      
+      
+      
   }
   
   

@@ -4,13 +4,13 @@ import Monster from '../objects/Monster.js';
 import { spawnMonster } from '../systems/monsterspawn.js'
 import { DroppedWeapon, BombObject } from '../objects/Weapon.js';
 import { ExpObject } from '../objects/Exp.js';
-import { DroppedUsableItem, Sajikseo } from '../objects/usableitems.js';
+import { DroppedUsableItem, Skill } from '../objects/usableitems.js';
 import WeaponSwapModal from '../ui/WeaponSwapModal.js';
 import WeaponUpgradeModal from '../ui/WeaponUpgradeModal.js';
 import Boss from '../objects/Boss.js';
 
 
-const WEAPON_IMAGE_KEYS = ['coffee', 'usb', 'mouse', 'bomb', 'airpods'];
+const WEAPON_IMAGE_KEYS = ['coffee', 'usb', 'mouse', 'bomb', 'typing'];
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -30,8 +30,8 @@ export default class GameScene extends Phaser.Scene {
     this.load.image('coffee','/src/assets/weapon/coffee.png');
     this.load.image('mouse','/src/assets/weapon/mouse.png');
     this.load.image('bomb','/src/assets/weapon/printer.png');
-    this.load.image('airpods','/src/assets/weapon/airpods.png');
-    this.load.image('sajikseo','/src/assets/usableitem/sajikseo.png');
+    this.load.image('typing','/src/assets/weapon/typing.png');
+    this.load.image('skill','/src/assets/usableitem/skill.png');
     this.load.image('player', 'src/assets/images/Player.png');
     this.load.image('map', '/src/assets/map/map.png');
     this.load.image('map2', '/src/assets/map/map2.png');
@@ -426,8 +426,8 @@ export default class GameScene extends Phaser.Scene {
       let newItem = null;
       
       switch (itemSprite.itemKey) {
-        case 'sajikseo':
-          newItem = new Sajikseo(this, player);
+        case 'skill':
+          newItem = new Skill(this, player);
           break;
         default:
           console.warn('Unknown usable item:', itemSprite.itemKey);
@@ -471,9 +471,9 @@ export default class GameScene extends Phaser.Scene {
       y = Phaser.Math.Between(mapBounds.y + 50, mapBounds.y + mapBounds.height - 50);
     } while (Phaser.Math.Distance.Between(playerX, playerY, x, y) < minDistance);
     
-    // 랜덤하게 아이템 선택 (현재는 사직서만)
-    const itemKey = 'sajikseo';
-    const itemName = '사직서';
+    // 랜덤하게 아이템 선택 (현재는 휴가신청서만)
+    const itemKey = 'skill';
+    const itemName = '휴가신청서';
     
     const droppedItem = new DroppedUsableItem(this, x, y, itemKey, itemName);
     this.usableItems.add(droppedItem);

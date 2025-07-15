@@ -58,7 +58,7 @@ export default class Monster extends Phaser.Physics.Arcade.Sprite {
   }
 
   update() {
-    // 사직서 효과로 멈춘 상태가 아니면 움직임
+    // 휴가신청서 효과로 멈춘 상태가 아니면 움직임
     if (!this.isStunned && this.player && this.scene.physics.world) {
       this.scene.physics.moveToObject(this, this.player, this.speed);
     } else if (this.isStunned) {
@@ -97,7 +97,7 @@ export default class Monster extends Phaser.Physics.Arcade.Sprite {
   die() {
     // 일정 확률로 무기 드랍
     if (Math.random() < 0.5) { // 50% 확률
-      const weaponTypes = ['coffee', 'usb', 'mouse', 'bomb', 'airpods'];
+      const weaponTypes = ['coffee', 'usb', 'mouse', 'bomb', 'typing'];
       const weaponKey = weaponTypes[Math.floor(Math.random() * weaponTypes.length)];
       const drop = new DroppedWeapon(this.scene, this.x, this.y, weaponKey);
       if (this.scene.weapons) {

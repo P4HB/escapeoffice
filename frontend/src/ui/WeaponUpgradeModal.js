@@ -83,7 +83,7 @@ export default class WeaponUpgradeModal {
       usb: '💾 USB',
       mouse: '🖱️ 마우스',
       bomb: '💣 프린터',
-      airpods: '🎧 AirPods'
+      typing: '🎧 Typing'
     };
 
     const weaponDescriptions = {
@@ -91,7 +91,7 @@ export default class WeaponUpgradeModal {
       usb: '사정거리 +30%',
       mouse: '발사속도 +25%',
       bomb: '폭발범위 +40%',
-      airpods: '회전속도 +20%'
+      typing: '회전속도 +20%'
     };
 
     // 옵션 박스
@@ -186,7 +186,7 @@ export default class WeaponUpgradeModal {
       usb: '💾 USB',
       mouse: '🖱️ 마우스',
       bomb: '💣 프린터',
-      airpods: '🎧 AirPods'
+      typing: '🎧 Typing'
     };
 
     // 효과 텍스트

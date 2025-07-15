@@ -57,11 +57,23 @@ export default class GameScene extends Phaser.Scene {
 
   create() {
     // 맵 이미지 추가 및 변수에 저장
-    const map = this.add.image(0, 0, 'map3').setOrigin(0);
-
-    // 맵 이미지 기준으로 월드 바운드 설정
-    this.physics.world.setBounds(0, 0, map.width, map.height);
-    this.cameras.main.setBounds(0, 0, map.width, map.height);
+    const tileWidth = 1536;
+    const tileHeight = 1024;
+    
+    // 4x4로 이어붙이기
+    for (let row = 0; row < 4; row++) {
+      for (let col = 0; col < 4; col++) {
+        this.add.image(col * tileWidth, row * tileHeight, 'map3').setOrigin(0);
+      }
+    }
+    
+    // 전체 맵 크기 계산
+    const totalWidth = tileWidth * 4;
+    const totalHeight = tileHeight * 4;
+    
+    // 카메라 & 물리 월드 바운드 설정
+    this.physics.world.setBounds(0, 0, totalWidth, totalHeight);
+    this.cameras.main.setBounds(0, 0, totalWidth, totalHeight);
 
     // ✅ 2. 씬이 시작될 때마다 모든 상태를 초기화합니다.
     this.isPausedForWeaponSwap = false;
@@ -82,7 +94,7 @@ export default class GameScene extends Phaser.Scene {
     this.usableItems = this.physics.add.group();
 
     this.monsterSpawnTimer1 = this.time.addEvent({
-        delay: 2000,
+        delay: 300,
         loop: true,
         callback: this.spawnRandomMonster,
         callbackScope: this

@@ -26,7 +26,7 @@ export default class RegisterScene extends Phaser.Scene {
       const password = document.getElementById('password')?.value;
       const nickname = document.getElementById('nickname')?.value;
 
-      fetch('http://127.0.0.1:5000/api/register', {
+      fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id, password, nickname })

@@ -4,11 +4,11 @@ export default class WeaponEncyclopediaScene extends Phaser.Scene {
     }
   
     preload() {
-      this.load.image('coffee', '/src/assets/weapon/coffee.png');
-      this.load.image('usb', '/src/assets/weapon/usb.png');
-      this.load.image('bomb', '/src/assets/weapon/printer.png');
-      this.load.image('mouse', '/src/assets/weapon/mouse.png');
-      this.load.image('typing', '/src/assets/weapon/typing.png');
+      this.load.image('coffee', '/assets/weapon/coffee.png');
+      this.load.image('usb', '/assets/weapon/usb.png');
+      this.load.image('bomb', '/assets/weapon/printer.png');
+      this.load.image('mouse', '/assets/weapon/mouse.png');
+      this.load.image('typing', '/assets/weapon/typing.png');
     }
   
     create() {

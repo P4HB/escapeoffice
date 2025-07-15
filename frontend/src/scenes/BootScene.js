@@ -4,7 +4,7 @@ export default class BootScene extends Phaser.Scene {
     }
   
     preload() {
-      this.load.image('splashLogo', '/src/assets/images/splash_logo.png'); // 로고 이미지 경로
+      this.load.image('splashLogo', '/assets/images/splash_logo.png'); // 로고 이미지 경로
     }
   
     create() {

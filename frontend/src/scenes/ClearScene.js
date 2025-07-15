@@ -33,7 +33,7 @@ export default class ClearScene extends Phaser.Scene {
 
 
   // ✅ 점수 서버로 전송
-      fetch('http://127.0.0.1:5000/api/score', {
+      fetch('/api/score', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

@@ -16,7 +16,7 @@ export default class RankingScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // 🧠 랭킹 데이터를 서버에서 불러오기
-    fetch('http://127.0.0.1:5000/api/ranking')
+    fetch('/api/ranking')
       .then(res => res.json())
       .then(ranking => {
         if (!Array.isArray(ranking)) {

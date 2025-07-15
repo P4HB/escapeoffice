@@ -20,11 +20,13 @@ export class Weapon {
   }
 
   upgrade() {
-    if (this.level === 7  && this.bulletKey && !this.bulletKey.includes('_max')) {
+    this.level += 1;
+    if (this.level >= 7  && this.bulletKey && !this.bulletKey.includes('_max')) {
+      this.level = 7;
       this.bulletKey = this.bulletKey + '_max';
+      console.log('[⚡] bulletKey:', this.bulletKey);
       return;
     }
-    this.level += 1;
     // 기본 업그레이드: 데미지 증가
     this.damage = Math.floor(this.damage * 1.2);
   }
@@ -71,6 +73,7 @@ export class RangedWeapon extends Weapon {
   }
 
   createBullet() {
+    console.log('[⚡] bulletKey 업그레이드됨:', this.bulletKey);
     const bullet = this.scene.bullets.create(this.player.x, this.player.y, this.bulletKey);
 
     if (bullet) {

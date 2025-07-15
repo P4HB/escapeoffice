@@ -291,19 +291,24 @@ export default class GameScene extends Phaser.Scene {
   // ⭐ 이미 무적 상태면 아무 일도 안 일어남
   if (player.isInvincible) return;
 
-  // 💥 보스는 제거하지 않도록 예외 처리
+  // 💥 보스 충돌 시
   if (target instanceof Boss) {
     console.log('❗ 보스 충돌 - 제거하지 않음');
-    this.remainingMinutes += 10; // 시간 패널티
-    player.setInvincible(); // ⭐ 무적 상태 부여
-    return;
+    this.remainingMinutes += 10;
+    player.setInvincible();
+  } else {
+    // 💥 일반 몬스터 충돌 시
+    console.log('😵 플레이어 피격!');
+    this.remainingMinutes += 10; // ✅ 이 줄이 없었음!!
+    player.setInvincible();
   }
 
-  // 💥 일반 몬스터와 충돌 시 처리
-  player.setInvincible(); // ⭐ 무적 상태 부여
-  // 여기에서 체력 깎는 로직이 있다면 추가 (예: player.hp -= target.damage)
-  console.log('😵 플레이어 피격!');
+  // ⛔ 60분 이상 누적 시 게임 오버
+  if (this.remainingMinutes >= 60) {
+    this.scene.start('GameOverScene', { reason: 'overworked' });
+  }
 }
+
 
 
 
@@ -345,38 +350,47 @@ export default class GameScene extends Phaser.Scene {
   }
 
   handleBombHit(monster, bomb) {
-    // 모달이 열려있으면 폭탄 처리 안함
     if (this.isPausedForWeaponSwap || this.isPausedForWeaponUpgrade) return;
-    
+
     if (monster && bomb && bomb.active) {
-      // 폭발 범위 내의 모든 몬스터에게 데미지
       const explosionRadius = bomb.explosionRadius || 100;
       const bombX = bomb.x;
       const bombY = bomb.y;
-      
+
       console.log(`💥 폭탄 폭발! 위치: (${bombX}, ${bombY}), 범위: ${explosionRadius}, 데미지: ${bomb.damage}`);
-      
+
       let hitCount = 0;
+
+      // ✅ 일반 몬스터 데미지 처리
       this.monsters.getChildren().forEach(targetMonster => {
         if (targetMonster.active) {
           const distance = Phaser.Math.Distance.Between(bombX, bombY, targetMonster.x, targetMonster.y);
-          if (distance <= explosionRadius) {
-            console.log(`🎯 몬스터 피격! 거리: ${distance.toFixed(1)}, 몬스터 HP: ${targetMonster.hp} -> ${targetMonster.hp - (bomb.damage || 30)}`);
-            if (typeof targetMonster.takeDamage === 'function') {
-              targetMonster.takeDamage(bomb.damage || 30);
-              hitCount++;
-            }
+          if (distance <= explosionRadius && typeof targetMonster.takeDamage === 'function') {
+            console.log(`🎯 몬스터 피격! 거리: ${distance.toFixed(1)}, HP: ${targetMonster.hp} -> ${targetMonster.hp - (bomb.damage || 30)}`);
+            targetMonster.takeDamage(bomb.damage || 30);
+            hitCount++;
           }
         }
       });
-      
+
+      // ✅ 보스 데미지 처리 추가!
+      this.bossGroup.getChildren().forEach(boss => {
+        if (boss.active) {
+          const distance = Phaser.Math.Distance.Between(bombX, bombY, boss.x, boss.y);
+          if (distance <= explosionRadius && typeof boss.takeDamage === 'function') {
+            console.log(`👹 보스 피격! 거리: ${distance.toFixed(1)}, HP: ${boss.hp} -> ${boss.hp - (bomb.damage || 30)}`);
+            boss.takeDamage(bomb.damage || 30);
+            hitCount++;
+          }
+        }
+      });
+
       console.log(`💥 폭발 완료! 총 ${hitCount}마리 피격`);
-      
-      // 폭발 이펙트 (실제 폭발 반경과 정확히 일치)
+
+      // 폭발 이펙트
       const explosion = this.add.circle(bombX, bombY, explosionRadius, 0xff0000, 0.2)
         .setStrokeStyle(2, 0xff4444, 0.8);
-      
-      // 폭발 이펙트 페이드아웃
+
       this.tweens.add({
         targets: explosion,
         alpha: 0,
@@ -385,11 +399,11 @@ export default class GameScene extends Phaser.Scene {
           explosion.destroy();
         }
       });
-      
-      // 폭탄 제거
+
       bomb.destroy();
     }
   }
+
 
   handleExpPickup(player, expSprite) {
     // 모달이 열려있으면 경험치 획득 처리 안함

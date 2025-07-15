@@ -22,7 +22,7 @@ export class UsableItem {
       const elapsedTime = this.scene.time.now - this.startTime;
       const remainingTime = this.maxDuration - elapsedTime;
       
-      console.log(`⏰ 사직서 경과 시간: ${elapsedTime.toFixed(0)}ms, 남은 시간: ${remainingTime.toFixed(0)}ms`);
+      console.log(`⏰ 휴가신청서 경과 시간: ${elapsedTime.toFixed(0)}ms, 남은 시간: ${remainingTime.toFixed(0)}ms`);
     }
   }
 
@@ -32,10 +32,10 @@ export class UsableItem {
   }
 }
 
-// 사직서 아이템 - 몬스터들을 일시적으로 멈춤
-export class Sajikseo extends UsableItem {
+// 휴가신청서 아이템 - 몬스터들을 일시적으로 멈춤
+export class Skill extends UsableItem {
   constructor(scene, player) {
-    super(scene, player, 'sajikseo', '사직서', '주변 몬스터들을 일시적으로 멈춥니다');
+    super(scene, player, 'skill', '휴가신청서', '주변 몬스터들을 일시적으로 멈춥니다');
     this.maxDuration = 5000; // 5초
     this.radius = 200; // 효과 범위
   }
@@ -49,7 +49,7 @@ export class Sajikseo extends UsableItem {
     
     // Phaser 타이머 이벤트로 자동 해제 설정
     this.deactivateTimer = this.scene.time.delayedCall(this.maxDuration, () => {
-      console.log(`⏰ 타이머 이벤트로 사직서 효과 종료!`);
+      console.log(`⏰ 타이머 이벤트로 휴가신청서 효과 종료!`);
       this.deactivate();
     });
     
@@ -97,7 +97,7 @@ export class Sajikseo extends UsableItem {
       }
     });
     
-    console.log(`📄 사직서 사용! ${stunnedCount}마리의 몬스터가 멈췄습니다.`);
+    console.log(`📄 휴가신청서 사용! ${stunnedCount}마리의 몬스터가 멈췄습니다.`);
     
     return true;
   }
@@ -142,7 +142,7 @@ export class Sajikseo extends UsableItem {
       }
     });
     
-    console.log(`🔄 사직서 효과 해제 완료! 총 ${restoredCount}마리 복원`);
+    console.log(`🔄 휴가신청서 효과 해제 완료! 총 ${restoredCount}마리 복원`);
   }
 }
 

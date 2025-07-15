@@ -4,13 +4,13 @@ import Monster from '../objects/Monster.js';
 import { spawnMonster } from '../systems/monsterspawn.js'
 import { DroppedWeapon, BombObject } from '../objects/Weapon.js';
 import { ExpObject } from '../objects/Exp.js';
-import { DroppedUsableItem, Sajikseo } from '../objects/usableitems.js';
+import { DroppedUsableItem, Skill } from '../objects/usableitems.js';
 import WeaponSwapModal from '../ui/WeaponSwapModal.js';
 import WeaponUpgradeModal from '../ui/WeaponUpgradeModal.js';
 import Boss from '../objects/Boss.js';
 
 
-const WEAPON_IMAGE_KEYS = ['coffee', 'usb', 'mouse', 'bomb', 'airpods'];
+const WEAPON_IMAGE_KEYS = ['coffee', 'usb', 'mouse', 'bomb', 'typing'];
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -39,8 +39,8 @@ export default class GameScene extends Phaser.Scene {
     this.load.image('coffee','/src/assets/weapon/coffee.png');
     this.load.image('mouse','/src/assets/weapon/mouse.png');
     this.load.image('bomb','/src/assets/weapon/printer.png');
-    this.load.image('airpods','/src/assets/weapon/airpods.png');
-    this.load.image('sajikseo','/src/assets/usableitem/sajikseo.png');
+    this.load.image('typing','/src/assets/weapon/typing.png');
+    this.load.image('skill','/src/assets/usableitem/skill.png');
     this.load.image('player', 'src/assets/images/Player.png');
     this.load.image('map', '/src/assets/map/map.png');
     this.load.image('map2', '/src/assets/map/map2.png');
@@ -396,16 +396,28 @@ export default class GameScene extends Phaser.Scene {
   handlePlayerHit(player, target) {
     if (player.isInvincible) return;
 
-    if (target instanceof Boss) {
-      console.log('❗ 보스 충돌 - 제거하지 않음');
-      this.remainingMinutes += 10;
-      player.setInvincible();
-      return;
-    }
-    
+  // 💥 보스 충돌 시
+  if (target instanceof Boss) {
+    console.log('❗ 보스 충돌 - 제거하지 않음');
+    this.remainingMinutes += 10;
     player.setInvincible();
+  } else {
+    // 💥 일반 몬스터 충돌 시
     console.log('😵 플레이어 피격!');
+    this.remainingMinutes += 10; // ✅ 이 줄이 없었음!!
+    player.setInvincible();
   }
+
+  // ⛔ 60분 이상 누적 시 게임 오버
+  if (this.remainingMinutes >= 60) {
+    this.scene.start('GameOverScene', { reason: 'overworked' });
+  }
+}
+
+
+
+
+
 
   handleWeaponPickup(player, weaponSprite) {
     if (this.isPausedForWeaponSwap || this.isPausedForWeaponUpgrade) return;
@@ -433,35 +445,57 @@ export default class GameScene extends Phaser.Scene {
 
   handleBombHit(monster, bomb) {
     if (this.isPausedForWeaponSwap || this.isPausedForWeaponUpgrade) return;
-    
+
     if (monster && bomb && bomb.active) {
       const explosionRadius = bomb.explosionRadius || 100;
       const bombX = bomb.x;
       const bombY = bomb.y;
-      
+
+      console.log(`💥 폭탄 폭발! 위치: (${bombX}, ${bombY}), 범위: ${explosionRadius}, 데미지: ${bomb.damage}`);
+
+      let hitCount = 0;
+
+      // ✅ 일반 몬스터 데미지 처리
       this.monsters.getChildren().forEach(targetMonster => {
         if (targetMonster.active) {
           const distance = Phaser.Math.Distance.Between(bombX, bombY, targetMonster.x, targetMonster.y);
-          if (distance <= explosionRadius) {
-            if (typeof targetMonster.takeDamage === 'function') {
-              targetMonster.takeDamage(bomb.damage || 30);
-            }
+          if (distance <= explosionRadius && typeof targetMonster.takeDamage === 'function') {
+            console.log(`🎯 몬스터 피격! 거리: ${distance.toFixed(1)}, HP: ${targetMonster.hp} -> ${targetMonster.hp - (bomb.damage || 30)}`);
+            targetMonster.takeDamage(bomb.damage || 30);
+            hitCount++;
           }
         }
       });
-      
-      const explosion = this.add.circle(bombX, bombY, explosionRadius, 0xff0000, 0.2).setStrokeStyle(2, 0xff4444, 0.8);
-      
+
+      // ✅ 보스 데미지 처리 추가!
+      this.bossGroup.getChildren().forEach(boss => {
+        if (boss.active) {
+          const distance = Phaser.Math.Distance.Between(bombX, bombY, boss.x, boss.y);
+          if (distance <= explosionRadius && typeof boss.takeDamage === 'function') {
+            console.log(`👹 보스 피격! 거리: ${distance.toFixed(1)}, HP: ${boss.hp} -> ${boss.hp - (bomb.damage || 30)}`);
+            boss.takeDamage(bomb.damage || 30);
+            hitCount++;
+          }
+        }
+      });
+
+      console.log(`💥 폭발 완료! 총 ${hitCount}마리 피격`);
+
+      // 폭발 이펙트
+      const explosion = this.add.circle(bombX, bombY, explosionRadius, 0xff0000, 0.2)
+        .setStrokeStyle(2, 0xff4444, 0.8);
+
       this.tweens.add({
         targets: explosion,
         alpha: 0,
         duration: 500,
         onComplete: () => { explosion.destroy(); }
       });
-      
+
       bomb.destroy();
     }
   }
+
 
   handleExpPickup(player, expSprite) {
     if (this.isPausedForWeaponSwap || this.isPausedForWeaponUpgrade) return;
@@ -477,8 +511,8 @@ export default class GameScene extends Phaser.Scene {
     if (player && itemSprite && itemSprite.itemKey) {
       let newItem = null;
       switch (itemSprite.itemKey) {
-        case 'sajikseo':
-          newItem = new Sajikseo(this, player);
+        case 'skill':
+          newItem = new Skill(this, player);
           break;
         default:
           return;
@@ -510,8 +544,9 @@ export default class GameScene extends Phaser.Scene {
       y = Phaser.Math.Between(mapBounds.y + 50, mapBounds.y + mapBounds.height - 50);
     } while (Phaser.Math.Distance.Between(this.player.x, this.player.y, x, y) < 200);
     
-    const itemKey = 'sajikseo';
-    const itemName = '사직서';
+    // 랜덤하게 아이템 선택 (현재는 휴가신청서만)
+    const itemKey = 'skill';
+    const itemName = '휴가신청서';
     
     const droppedItem = new DroppedUsableItem(this, x, y, itemKey, itemName);
     this.usableItems.add(droppedItem);

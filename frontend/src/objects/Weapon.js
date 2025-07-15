@@ -349,16 +349,16 @@ export class SpinningWeaponInstance extends Phaser.GameObjects.Sprite {
   }
 }
 
-// AirPods 무기
-export class AirPods extends SpinningWeapon {
+// Typing 무기
+export class Typing extends SpinningWeapon {
   constructor(scene, player) {
-    super(scene, player, 'airpods', 1000, 100);
-    this.rotationSpeed = 2.5; // AirPods는 조금 더 빠르게 회전
+    super(scene, player, 'typing', 1000, 100);
+    this.rotationSpeed = 2.5; // Typing는 조금 더 빠르게 회전
   }
 
   upgrade() {
     super.upgrade();
-    // AirPods 특별 업그레이드: 회전 반경 증가
+    // Typing 특별 업그레이드: 회전 반경 증가
     this.rotationRadius = Math.floor(this.rotationRadius * 1.1); // 10% 증가
     
     // 기존 인스턴스들의 회전 반경도 업데이트

@@ -19,6 +19,15 @@ export default class GameScene extends Phaser.Scene {
     this.weaponSwapModalInstance = null;
     this.isPausedForWeaponUpgrade = false;
     this.weaponUpgradeModalInstance = null;
+    this.bossSpawned = false;
+    this.isChattingWithKim = false; // 채팅 중인지 확인하는 플래그
+    this.chatHistory = []; // 대화 기록을 저장할 배열
+    this.kimDaeRiMood = 0; // 김대리의 기분 점수 (0에서 시작)
+    this.chatUIElements = []; // 채팅 UI DOM 요소들을 관리할 배열
+    this.chatcount = 0;
+
+    // ✅ 1. 채팅 폼을 직접 저장할 속성을 추가합니다.
+    this.chatFormComponent = null;
   }
 
   preload() {
@@ -38,7 +47,7 @@ export default class GameScene extends Phaser.Scene {
     this.load.image('map3','/src/assets/map/map3.png');
     this.load.image('exp', 'src/assets/images/exp.png');
     this.load.image('boss', '/src/assets/boss/boss.png');
-
+    // this.load.html('chatForm', 'src/ui/chatForm.html'); // 이제 이 줄은 필요 없습니다.
   }
 
   create() {
@@ -49,16 +58,26 @@ export default class GameScene extends Phaser.Scene {
     this.physics.world.setBounds(0, 0, map.width, map.height);
     this.cameras.main.setBounds(0, 0, map.width, map.height);
 
-    this.bullets = this.physics.add.group();
-    // 무기 드랍 그룹 생성
-    this.weapons = this.physics.add.group();
-    this.bombs = this.physics.add.group(); // bomb 그룹 생성
-    this.exps = this.physics.add.group(); // 경험치 그룹
-    this.usableItems = this.physics.add.group(); // 사용 가능한 아이템 그룹
+    // ✅ 2. 씬이 시작될 때마다 모든 상태를 초기화합니다.
+    this.isPausedForWeaponSwap = false;
+    this.weaponSwapModalInstance = null;
+    this.isPausedForWeaponUpgrade = false;
+    this.weaponUpgradeModalInstance = null;
+    this.bossSpawned = false;
+    this.isChattingWithKim = false;
+    this.chatHistory = [];
+    this.kimDaeRiMood = 0;
+    this.chatUIElements = [];
+    this.chatFormComponent = null; // 채팅 폼 참조도 null로 초기화
 
-    // 몬스터 스폰 타이머들 (일시정지 가능하도록 변수에 저장)
+    this.bullets = this.physics.add.group();
+    this.weapons = this.physics.add.group();
+    this.bombs = this.physics.add.group();
+    this.exps = this.physics.add.group();
+    this.usableItems = this.physics.add.group();
+
     this.monsterSpawnTimer1 = this.time.addEvent({
-        delay: 2000, // 2초마다 한 마리
+        delay: 2000,
         loop: true,
         callback: this.spawnRandomMonster,
         callbackScope: this
@@ -66,95 +85,54 @@ export default class GameScene extends Phaser.Scene {
 
     this.cursors = this.input.keyboard.createCursorKeys()
     
-    // 사용 가능한 아이템 사용 키 설정
-    this.input.keyboard.on('keydown-SPACE', () => {
-      this.useUsableItem(0); // 첫 번째 아이템 사용
-    });
-    this.input.keyboard.on('keydown-Q', () => {
-      this.useUsableItem(1); // 두 번째 아이템 사용
-    });
-    this.input.keyboard.on('keydown-E', () => {
-      this.useUsableItem(2); // 세 번째 아이템 사용
-    });
+    this.input.keyboard.on('keydown-SPACE', () => { this.useUsableItem(0); });
+    this.input.keyboard.on('keydown-Q', () => { this.useUsableItem(1); });
+    this.input.keyboard.on('keydown-E', () => { this.useUsableItem(2); });
     
-    const centerX = this.cameras.main.width / 2
-    const centerY = this.cameras.main.height / 2
+    const centerX = this.cameras.main.width / 2;
+    const centerY = this.cameras.main.height / 2;
 
-    this.player = new Player(this, centerX, centerY)
+    this.player = new Player(this, centerX, centerY);
     
-    // 사용 가능한 아이템 인벤토리 초기화
     this.playerUsableItems = [];
     this.usableItemUI = null;
     this.usableItemUIBoxes = [];
     this.usableItemUIImages = [];
 
-    this.baseHour = 19;   // 오후 7시 시작
+    this.baseHour = 19;
     this.remainingMinutes = 0;
-
-    // 5분 타이머 설정 (300초 = 5분)
-    this.gameTime = 300; // 5분을 초 단위로
+    this.gameTime = 300;
     this.startTime = this.time.now;
 
-    this.statusText = this.add.text(20, 20, '', {
-     fontSize: '20px',
-     fill: '#ffffff'
-        }).setScrollFactor(0);
+    this.statusText = this.add.text(20, 20, '', { fontSize: '20px', fill: '#ffffff' }).setScrollFactor(0);
+    this.timerText = this.add.text(20, 50, '', { fontSize: '18px', fill: '#ff0000', fontStyle: 'bold' }).setScrollFactor(0);
 
-    // 타이머 텍스트 추가
-    this.timerText = this.add.text(20, 50, '', {
-      fontSize: '18px',
-      fill: '#ff0000',
-      fontStyle: 'bold'
-    }).setScrollFactor(0);
-
-    this.cameras.main.startFollow(this.player); // 카메라 따라가기
-    this.monsters = this.physics.add.group({
-        classType : Monster,
-        runChildUpdate : true
-    });
+    this.cameras.main.startFollow(this.player);
+    this.monsters = this.physics.add.group({ classType : Monster, runChildUpdate : true });
 
     this.physics.add.overlap(this.player, this.monsters, this.handlePlayerHit, null, this);
-
-    this.physics.add.overlap(
-        this.bullets,
-        this.monsters,
-        this.handleBulletMonsterCollision,
-        null,
-        this
-    )
+    this.physics.add.overlap(this.bullets, this.monsters, this.handleBulletMonsterCollision, null, this);
     
     this.monsterSpawnTimer2 = this.time.addEvent({
-        delay: 2000, // 2초마다 한 마리
+        delay: 2000,
         loop: true,
-        callback: ()=> {
-            spawnMonster(this, this.player, this.monsters);
-        }
+        callback: ()=> { spawnMonster(this, this.player, this.monsters); }
     });
 
-    // 사용 가능한 아이템 드랍 타이머
     this.usableItemSpawnTimer = this.time.addEvent({
-        delay: 10000, // 10초마다
+        delay: 10000,
         loop: true,
-        callback: () => {
-            this.spawnRandomUsableItem();
-        }
+        callback: () => { this.spawnRandomUsableItem(); }
     });
 
-    // 콜라이더 디버그 모드 활성화 (올바른 방법)
-    this.physics.world.drawDebug = true;
-    
-    // 수동 콜라이더 시각화를 위한 그래픽 그룹
+    this.physics.world.drawDebug = false; // 디버그는 필요할 때 true로 설정
     this.debugGraphics = this.add.graphics();
 
-    // 플레이어와 드랍 무기 충돌 처리
     this.physics.add.overlap(this.player, this.weapons, this.handleWeaponPickup, null, this);
-    // 몬스터와 bomb 충돌 처리
     this.physics.add.overlap(this.monsters, this.bombs, this.handleBombHit, null, this);
     this.physics.add.overlap(this.player, this.exps, this.handleExpPickup, null, this);
-    // 플레이어와 사용 가능한 아이템 충돌 처리
     this.physics.add.overlap(this.player, this.usableItems, this.handleUsableItemPickup, null, this);
 
-    // 무기 UI 그룹 생성
     this.weaponUIImages = [];
     this.weaponUIBoxes = [];
     this.weaponUILevelTexts = [];
@@ -162,24 +140,12 @@ export default class GameScene extends Phaser.Scene {
     this.drawWeaponUI();
     this.drawUsableItemUI();
 
-
-    this.bossSpawned = false;
-    this.bossGroup = this.physics.add.group(); // 보스 전용 그룹
-
-
-
-    //충돌 등록 ⭐⭐ 요기!
-  this.physics.add.overlap(this.player, this.monsters, this.handlePlayerHit, null, this);
-  this.physics.add.overlap(this.player, this.boss, this.handlePlayerHit, null, this);
-
-
-
+    this.bossGroup = this.physics.add.group();
+    // this.physics.add.overlap(this.player, this.boss, this.handlePlayerHit, null, this); // 'this.boss'는 존재하지 않음. 보스 그룹과 충돌처리해야함
   }
 
   handleBulletMonsterCollision(bullet,monster){ 
-    // 모달이 열려있으면 총알 충돌 처리 안함
     if (this.isPausedForWeaponSwap || this.isPausedForWeaponUpgrade) return;
-    
     if(monster && bullet.damage !== undefined){
         monster.takeDamage(bullet.damage);
         bullet.destroy();
@@ -187,154 +153,251 @@ export default class GameScene extends Phaser.Scene {
   }
 
   update(time,delta) {
-    if (this.isPausedForWeaponSwap || this.isPausedForWeaponUpgrade) {
-      // 모달이 뜬 동안 모든 시스템 정지
+    // 채팅 중일 때는 player.update()가 호출되지 않도록 수정
+    if (this.isPausedForWeaponSwap || this.isPausedForWeaponUpgrade || this.isChattingWithKim) {
       return;
     }
     this.player.update(time, this.cursors);
     
-
-
-    // ✅ 퇴근 시간 계산 및 표시
     const totalMinutes = this.baseHour * 60 + this.remainingMinutes;
     const hour = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
+    this.statusText.setText(`퇴근 시간: 오후 ${hour}시 ${minutes.toString().padStart(2, '0')}분`);
 
-    this.statusText.setText(
-      `퇴근 시간: 오후 ${hour}시 ${minutes.toString().padStart(2, '0')}분`
-    );
-
-    // 타이머 업데이트
-    const elapsedTime = (this.time.now - this.startTime) / 1000; // 초 단위로 변환
+    const elapsedTime = (this.time.now - this.startTime) / 1000;
     const remainingTime = Math.max(0, this.gameTime - elapsedTime);
-    
     const timerMinutes = Math.floor(remainingTime / 60);
     const timerSeconds = Math.floor(remainingTime % 60);
-    
-    this.timerText.setText(
-      `남은 시간: ${timerMinutes}:${timerSeconds.toString().padStart(2, '0')}`
-    );
+    this.timerText.setText(`남은 시간: ${timerMinutes}:${timerSeconds.toString().padStart(2, '0')}`);
 
-    // 시간이 다 되면 게임 오버
     if (remainingTime <= 0) {
       this.scene.start('GameOverScene', { reason: 'timeout' });
     }
     
-    // 수동 콜라이더 시각화
-    this.drawColliders();
-    // 무기 UI 갱신
+    if (this.physics.world.drawDebug) {
+        this.drawColliders();
+    }
+
     this.drawWeaponUI();
-    // 사용 가능한 아이템 UI 갱신
     this.drawUsableItemUI();
     
-    // 사용 가능한 아이템 업데이트
-    this.playerUsableItems.forEach((item, index) => {
+    this.playerUsableItems.forEach((item) => {
       if (item && item.update) {
-        console.log(`🔄 아이템 ${index} 업데이트 호출, isActive: ${item.isActive}`);
         item.update(time);
       }
     });
 
+    if (!this.bossSpawned && !this.isChattingWithKim && this.player.level >= 2) {
+      this.startBossChatSequence();
+    }
+  }
 
-    if (!this.bossSpawned && this.player.level >= 2) {
-      this.spawnBoss();
-      this.bossSpawned = true;
+  startBossChatSequence() {
+    this.isChattingWithKim = true;
+    console.log("🤖 거래처 김대리와의 대화를 시작합니다...");
+
+    this.physics.world.pause();
+    this.monsterSpawnTimer1.paused = true;
+    this.monsterSpawnTimer2.paused = true;
+    this.usableItemSpawnTimer.paused = true;
+
+    const centerX = this.cameras.main.width / 2;
+    const centerY = this.cameras.main.height / 2;
+
+    const bg = this.add.graphics({ fillStyle: { color: 0x000000, alpha: 0.7 } });
+    bg.fillRect(0, 0, this.cameras.main.width, this.cameras.main.height);
+    bg.setScrollFactor(0);
+    this.chatUIElements.push(bg);
+
+    // ✅ 3. 코드로 직접 HTML 생성
+    const chatHTML = `
+      <div id="chat-form">
+        <div id="chatLog"></div>
+        <div id="input-container">
+          <input type="text" name="playerInput" placeholder="할 말을 입력하세요...">
+          <button name="sendButton">전송</button>
+        </div>
+      </div>
+    `;
+    const chatForm = this.add.dom(centerX, centerY).createFromHTML(chatHTML);
+    
+    chatForm.setScrollFactor(0);
+    
+    // ✅ 4. 직접 참조 저장 및 배열에 추가
+    this.chatFormComponent = chatForm;
+    this.chatUIElements.push(chatForm);
+
+    chatForm.setPerspective(800);
+    chatForm.addListener('click');
+    chatForm.on('click', (event) => {
+      if (event.target.name === 'sendButton') {
+        const inputText = chatForm.getChildByName('playerInput');
+        if (inputText.value !== '') {
+          this.handlePlayerMessage(inputText.value);
+          inputText.value = '';
+        }
+      }
+    });
+    
+    this.appendMessageToLog("플레이어: (거래처 사장님을 만나기 전, 김대리에게 말을 건다...)");
+
+    const inputField = chatForm.getChildByName('playerInput');
+    if (inputField) {
+      inputField.focus();
+    }
+  }
+
+  // ✅ 5. 직접 참조를 사용하는 appendMessageToLog 함수
+  appendMessageToLog(text) {
+    if (this.chatFormComponent) {
+      const chatLog = this.chatFormComponent.getChildByID('chatLog');
+      
+      if (chatLog) {
+        chatLog.innerHTML += `<p>${text}</p>`;
+        chatLog.scrollTop = chatLog.scrollHeight;
+      } else {
+        console.error("오류: 'chat-form'은 찾았으나, 내부의 'chatLog'를 찾지 못했습니다.");
+      }
+    } else {
+      console.error("오류: this.chatFormComponent가 설정되지 않았습니다.");
+    }
+  }
+
+  async handlePlayerMessage(message) {
+    this.appendMessageToLog(`나: ${message}`);
+
+    if (message.includes("가볼게요") || message.includes("가보겠습니다") || message.includes("그만")) {
+      this.appendMessageToLog("김대리: 네, 그럼 부장님께 잘 말씀드려주세요.");
+      this.endChatAndSpawnBoss();
+      return;
     }
 
+    try {
+      const response = await fetch('http://localhost:3000/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: message,
+          history: this.chatHistory,
+        }),
+      });
 
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+
+      this.kimDaeRiMood += data.moodChange;
+      this.chatHistory.push({ role: 'user', content: message });
+      this.chatHistory.push({ role: 'model', content: data.response });
+      
+      this.appendMessageToLog(`김대리: ${data.response}`);
+      console.log(`[기분 변화: ${data.moodChange}] [현재 기분 점수: ${this.kimDaeRiMood}]`);
+
+    } catch (error) {
+      console.error("채팅 서버 통신 오류:", error);
+      this.appendMessageToLog("[시스템] 서버와 통신 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+    }
   }
-  
+
+  // ✅ 6. 직접 참조를 초기화하는 endChatAndSpawnBoss 함수
+  endChatAndSpawnBoss() {
+    console.log(`👹 대화 종료! 최종 기분 점수: ${this.kimDaeRiMood}. 이 점수로 보스를 소환합니다.`);
+    this.isChattingWithKim = false;
+
+    this.chatUIElements.forEach(element => element.destroy());
+    this.chatUIElements = [];
+    this.chatFormComponent = null; // 참조 초기화
+
+    this.physics.world.resume();
+    this.monsterSpawnTimer1.paused = false;
+    this.monsterSpawnTimer2.paused = false;
+    this.usableItemSpawnTimer.paused = false;
+
+    this.spawnBoss();
+    this.bossSpawned = true;
+  }
+
+  // ✅ 7. 난이도 조절 로직이 포함된 spawnBoss 함수
+  spawnBoss() {
+    const x = this.player.x + 300;
+    const y = this.player.y + 300;
+
+    let bossHealth = 2000;
+    let bossDamage = 50;
+
+    bossHealth -= this.kimDaeRiMood * 20;
+    bossDamage -= this.kimDaeRiMood * 1;
+
+    bossHealth = Phaser.Math.Clamp(bossHealth, 1000, 4000);
+    bossDamage = Phaser.Math.Clamp(bossDamage, 25, 100);
+
+    console.log(`👹 보스 스펙 - 체력: ${bossHealth}, 공격력: ${bossDamage}`);
+
+    const boss = new Boss(this, x, y, this.player, bossHealth, bossDamage);
+    this.bossGroup.add(boss);
+
+    this.physics.add.overlap(this.bullets, this.bossGroup, this.handleBulletMonsterCollision, null, this);
+    this.physics.add.overlap(this.player, this.bossGroup, this.handlePlayerHit, null, this);
+
+    console.log('👹 거래처 사장(보스) 등장!');
+  }
+
   drawColliders() {
     this.debugGraphics.clear();
     
-    // 플레이어 콜라이더 그리기
     if (this.player && this.player.body) {
       this.debugGraphics.lineStyle(2, 0xff0000);
-      this.debugGraphics.strokeRect(
-        this.player.x - this.player.body.width / 2,
-        this.player.y - this.player.body.height / 2,
-        this.player.body.width,
-        this.player.body.height
-      );
+      this.debugGraphics.strokeRect(this.player.x - this.player.body.width / 2, this.player.y - this.player.body.height / 2, this.player.body.width, this.player.body.height);
     }
     
-    // 몬스터 콜라이더 그리기
     this.monsters.getChildren().forEach(monster => {
       if (monster.body) {
         this.debugGraphics.lineStyle(2, 0x00ff00);
-        this.debugGraphics.strokeRect(
-          monster.x - monster.body.width / 2,
-          monster.y - monster.body.height / 2,
-          monster.body.width,
-          monster.body.height
-        );
+        this.debugGraphics.strokeRect(monster.x - monster.body.width / 2, monster.y - monster.body.height / 2, monster.body.width, monster.body.height);
       }
     });
     
-    // 총알 콜라이더 그리기
     this.bullets.getChildren().forEach(bullet => {
       if (bullet.body) {
         this.debugGraphics.lineStyle(2, 0x0000ff);
-        this.debugGraphics.strokeRect(
-          bullet.x - bullet.body.width / 2,
-          bullet.y - bullet.body.height / 2,
-          bullet.body.width,
-          bullet.body.height
-        );
+        this.debugGraphics.strokeRect(bullet.x - bullet.body.width / 2, bullet.y - bullet.body.height / 2, bullet.body.width, bullet.body.height);
       }
     });
-    
-
   }
 
   handlePlayerHit(player, target) {
-  // ⭐ 이미 무적 상태면 아무 일도 안 일어남
-  if (player.isInvincible) return;
+    if (player.isInvincible) return;
 
-  // 💥 보스는 제거하지 않도록 예외 처리
-  if (target instanceof Boss) {
-    console.log('❗ 보스 충돌 - 제거하지 않음');
-    this.remainingMinutes += 10; // 시간 패널티
-    player.setInvincible(); // ⭐ 무적 상태 부여
-    return;
+    if (target instanceof Boss) {
+      console.log('❗ 보스 충돌 - 제거하지 않음');
+      this.remainingMinutes += 10;
+      player.setInvincible();
+      return;
+    }
+    
+    player.setInvincible();
+    console.log('😵 플레이어 피격!');
   }
 
-  // 💥 일반 몬스터와 충돌 시 처리
-  player.setInvincible(); // ⭐ 무적 상태 부여
-  // 여기에서 체력 깎는 로직이 있다면 추가 (예: player.hp -= target.damage)
-  console.log('😵 플레이어 피격!');
-}
-
-
-
-
-
   handleWeaponPickup(player, weaponSprite) {
-    // 모달이 열려있으면 무기 획득 처리 안함
     if (this.isPausedForWeaponSwap || this.isPausedForWeaponUpgrade) return;
     
-
-    
     if (player && weaponSprite && weaponSprite.weaponKey) {
-      // 이미 3종류 보유 & 새로운 무기라면 모달 표시
-      if (
-        Object.keys(player.obtainedWeapons).length >= 3 &&
-        !player.obtainedWeapons[weaponSprite.weaponKey]
-      ) {
+      if (Object.keys(player.obtainedWeapons).length >= 3 && !player.obtainedWeapons[weaponSprite.weaponKey]) {
         this.isPausedForWeaponSwap = true;
         
-        // 게임 타이머와 물리 시뮬레이션 일시정지
         this.time.paused = true;
         this.physics.world.pause();
         
         this.weaponSwapModalInstance = new WeaponSwapModal(this, player, weaponSprite.weaponKey, weaponSprite, (swapped) => {
           this.isPausedForWeaponSwap = false;
           this.weaponSwapModalInstance = null;
-          
-          // 게임 타이머와 물리 시뮬레이션 재개
           this.time.paused = false;
           this.physics.world.resume();
-          
           if (!swapped && weaponSprite && weaponSprite.active) weaponSprite.destroy();
         });
         return;
@@ -345,58 +408,39 @@ export default class GameScene extends Phaser.Scene {
   }
 
   handleBombHit(monster, bomb) {
-    // 모달이 열려있으면 폭탄 처리 안함
     if (this.isPausedForWeaponSwap || this.isPausedForWeaponUpgrade) return;
     
     if (monster && bomb && bomb.active) {
-      // 폭발 범위 내의 모든 몬스터에게 데미지
       const explosionRadius = bomb.explosionRadius || 100;
       const bombX = bomb.x;
       const bombY = bomb.y;
       
-      console.log(`💥 폭탄 폭발! 위치: (${bombX}, ${bombY}), 범위: ${explosionRadius}, 데미지: ${bomb.damage}`);
-      
-      let hitCount = 0;
       this.monsters.getChildren().forEach(targetMonster => {
         if (targetMonster.active) {
           const distance = Phaser.Math.Distance.Between(bombX, bombY, targetMonster.x, targetMonster.y);
           if (distance <= explosionRadius) {
-            console.log(`🎯 몬스터 피격! 거리: ${distance.toFixed(1)}, 몬스터 HP: ${targetMonster.hp} -> ${targetMonster.hp - (bomb.damage || 30)}`);
             if (typeof targetMonster.takeDamage === 'function') {
               targetMonster.takeDamage(bomb.damage || 30);
-              hitCount++;
             }
           }
         }
       });
       
-      console.log(`💥 폭발 완료! 총 ${hitCount}마리 피격`);
+      const explosion = this.add.circle(bombX, bombY, explosionRadius, 0xff0000, 0.2).setStrokeStyle(2, 0xff4444, 0.8);
       
-      // 폭발 이펙트 (실제 폭발 반경과 정확히 일치)
-      const explosion = this.add.circle(bombX, bombY, explosionRadius, 0xff0000, 0.2)
-        .setStrokeStyle(2, 0xff4444, 0.8);
-      
-      // 폭발 이펙트 페이드아웃
       this.tweens.add({
         targets: explosion,
         alpha: 0,
         duration: 500,
-        onComplete: () => {
-          explosion.destroy();
-        }
+        onComplete: () => { explosion.destroy(); }
       });
       
-      // 폭탄 제거
       bomb.destroy();
     }
   }
 
   handleExpPickup(player, expSprite) {
-    // 모달이 열려있으면 경험치 획득 처리 안함
     if (this.isPausedForWeaponSwap || this.isPausedForWeaponUpgrade) return;
-    
-
-    
     if (player && expSprite && expSprite.amount) {
       player.gainExp(expSprite.amount * 3);
       expSprite.destroy();
@@ -404,77 +448,57 @@ export default class GameScene extends Phaser.Scene {
   }
 
   handleUsableItemPickup(player, itemSprite) {
-    // 모달이 열려있으면 아이템 획득 처리 안함
     if (this.isPausedForWeaponSwap || this.isPausedForWeaponUpgrade) return;
     
     if (player && itemSprite && itemSprite.itemKey) {
-      // 아이템 생성 및 인벤토리에 추가
       let newItem = null;
-      
       switch (itemSprite.itemKey) {
         case 'sajikseo':
           newItem = new Sajikseo(this, player);
           break;
         default:
-          console.warn('Unknown usable item:', itemSprite.itemKey);
           return;
       }
       
       if (newItem) {
         this.playerUsableItems.push(newItem);
-        console.log(`📦 ${itemSprite.itemName} 획득!`);
         itemSprite.destroy();
       }
     }
   }
 
-  // 사용 가능한 아이템 사용
   useUsableItem(index) {
     if (this.isPausedForWeaponSwap || this.isPausedForWeaponUpgrade) return;
     
     if (this.playerUsableItems[index] && this.playerUsableItems[index].use) {
       const success = this.playerUsableItems[index].use();
       if (success) {
-        console.log(`🎯 ${this.playerUsableItems[index].itemName} 사용!`);
-        // 사용된 아이템 제거
         this.playerUsableItems.splice(index, 1);
       }
     }
   }
 
-  // 사용 가능한 아이템 랜덤 드랍
   spawnRandomUsableItem() {
     const mapBounds = this.physics.world.bounds;
-    const playerX = this.player.x;
-    const playerY = this.player.y;
-    
-    // 플레이어로부터 최소 거리
-    const minDistance = 200;
     let x, y;
-    
     do {
       x = Phaser.Math.Between(mapBounds.x + 50, mapBounds.x + mapBounds.width - 50);
       y = Phaser.Math.Between(mapBounds.y + 50, mapBounds.y + mapBounds.height - 50);
-    } while (Phaser.Math.Distance.Between(playerX, playerY, x, y) < minDistance);
+    } while (Phaser.Math.Distance.Between(this.player.x, this.player.y, x, y) < 200);
     
-    // 랜덤하게 아이템 선택 (현재는 사직서만)
     const itemKey = 'sajikseo';
     const itemName = '사직서';
     
     const droppedItem = new DroppedUsableItem(this, x, y, itemKey, itemName);
     this.usableItems.add(droppedItem);
-    
-    console.log(`🎁 ${itemName} 드랍! 위치: (${x}, ${y})`);
   }
 
   drawUsableItemUI() {
-    // 기존 UI 이미지/박스 제거
     this.usableItemUIImages.forEach(img => img.destroy());
     this.usableItemUIImages = [];
     this.usableItemUIBoxes.forEach(box => box.destroy());
     this.usableItemUIBoxes = [];
     
-    // UI 위치/크기
     const { width, height } = this.scale;
     const iconSize = 48;
     const margin = 12;
@@ -483,49 +507,31 @@ export default class GameScene extends Phaser.Scene {
     const inventoryHeight = iconSize + boxPadding * 2;
     const inventoryX = width - inventoryWidth - margin;
     const inventoryY = height - inventoryHeight - margin;
-    
-    // 사용 가능한 아이템 UI는 무기 UI 위에 배치
     const usableItemY = inventoryY - inventoryHeight - margin - 20;
     
-    // 사용 가능한 아이템 박스들 그리기
     this.playerUsableItems.forEach((item, idx) => {
       const x = inventoryX + boxPadding + idx * (iconSize + boxPadding) + iconSize/2;
       const y = usableItemY + boxPadding + iconSize/2;
       
-      // 박스 그리기
-      const box = this.add.rectangle(x, y, iconSize, iconSize, 0x222222, 0.7)
-        .setStrokeStyle(2, 0x00ff00) // 초록색 테두리
-        .setScrollFactor(0);
+      const box = this.add.rectangle(x, y, iconSize, iconSize, 0x222222, 0.7).setStrokeStyle(2, 0x00ff00).setScrollFactor(0);
       this.usableItemUIBoxes.push(box);
       
-      // 아이템 아이콘
-      const img = this.add.image(x, y, item.itemKey)
-        .setScrollFactor(0)
-        .setDisplaySize(iconSize-8, iconSize-8);
+      const img = this.add.image(x, y, item.itemKey).setScrollFactor(0).setDisplaySize(iconSize-8, iconSize-8);
       this.usableItemUIImages.push(img);
       
-      // 활성화 상태 표시
       if (item.isActive) {
-        const activeIndicator = this.add.circle(x, y, iconSize/2, 0x00ff00, 0.3)
-          .setScrollFactor(0);
+        const activeIndicator = this.add.circle(x, y, iconSize/2, 0x00ff00, 0.3).setScrollFactor(0);
         this.usableItemUIBoxes.push(activeIndicator);
       }
     });
     
-    // '사용 가능한 아이템' 텍스트
     if (this.playerUsableItems.length > 0) {
-      const text = this.add.text(
-        inventoryX + inventoryWidth/2,
-        usableItemY - 8,
-        '사용 가능한 아이템',
-        { fontSize: '16px', fill: '#00ff00', fontFamily: 'Arial', align: 'center', stroke: '#000', strokeThickness: 2 }
-      ).setOrigin(0.5, 1).setScrollFactor(0);
+      const text = this.add.text(inventoryX + inventoryWidth/2, usableItemY - 8, '사용 가능한 아이템', { fontSize: '16px', fill: '#00ff00', fontFamily: 'Arial', align: 'center', stroke: '#000', strokeThickness: 2 }).setOrigin(0.5, 1).setScrollFactor(0);
       this.usableItemUIBoxes.push(text);
     }
   }
 
   drawWeaponUI() {
-    // 기존 UI 이미지/박스/텍스트 제거
     this.weaponUIImages.forEach(img => img.destroy());
     this.weaponUIImages = [];
     this.weaponUIBoxes.forEach(box => box.destroy());
@@ -533,7 +539,7 @@ export default class GameScene extends Phaser.Scene {
     this.weaponUILevelTexts.forEach(text => text.destroy());
     this.weaponUILevelTexts = [];
     if (this.weaponUIText) { this.weaponUIText.destroy(); this.weaponUIText = null; }
-    // 인벤토리 UI 위치/크기
+    
     const { width, height } = this.scale;
     const iconSize = 48;
     const margin = 12;
@@ -542,88 +548,53 @@ export default class GameScene extends Phaser.Scene {
     const inventoryHeight = iconSize + boxPadding * 2;
     const inventoryX = width - inventoryWidth - margin;
     const inventoryY = height - inventoryHeight - margin;
-    // 인벤토리 박스 3개 그리기
+    
     for (let i = 0; i < 3; i++) {
       const x = inventoryX + boxPadding + i * (iconSize + boxPadding);
       const y = inventoryY + boxPadding;
-      const box = this.add.rectangle(x + iconSize/2, y + iconSize/2, iconSize, iconSize, 0x222222, 0.7)
-        .setStrokeStyle(2, 0xffffff)
-        .setScrollFactor(0);
+      const box = this.add.rectangle(x + iconSize/2, y + iconSize/2, iconSize, iconSize, 0x222222, 0.7).setStrokeStyle(2, 0xffffff).setScrollFactor(0);
       this.weaponUIBoxes.push(box);
     }
-    // 무기 아이콘 가로로 배치
+    
     if (this.player && this.player.obtainedWeapons) {
-      const keys = Object.keys(this.player.obtainedWeapons);
-      keys.slice(0, 3).forEach((weaponKey, idx) => {
+      Object.keys(this.player.obtainedWeapons).slice(0, 3).forEach((weaponKey, idx) => {
         if (WEAPON_IMAGE_KEYS.includes(weaponKey)) {
           const x = inventoryX + boxPadding + idx * (iconSize + boxPadding) + iconSize/2;
           const y = inventoryY + boxPadding + iconSize/2;
           const img = this.add.image(x, y, weaponKey).setScrollFactor(0).setDisplaySize(iconSize-8, iconSize-8);
           this.weaponUIImages.push(img);
           
-          // 무기 레벨 표시 (인벤토리 박스의 위쪽 바깥쪽)
           const weapon = this.player.obtainedWeapons[weaponKey];
           if (weapon && weapon.level) {
-            // 인벤토리 박스의 위치 계산
             const boxX = inventoryX + boxPadding + idx * (iconSize + boxPadding) + iconSize/2;
             const boxY = inventoryY + boxPadding + iconSize/2;
-            
-            // 레벨 텍스트 위치 (인벤토리 박스의 위쪽 바깥쪽)
-            const levelX = boxX + iconSize/2 - 8; // 인벤토리 박스 오른쪽 끝에서 약간 안쪽
-            const levelY = boxY - iconSize/2 - 8; // 인벤토리 박스 위쪽 바깥쪽
-            
-            // 레벨 텍스트
-            const levelText = this.add.text(levelX, levelY, `Lv.${weapon.level}`, {
-              fontSize: '12px',
-              fill: '#ffff00',
-              fontFamily: 'Arial',
-              stroke: '#000000',
-              strokeThickness: 2
-            }).setOrigin(1, 0).setScrollFactor(0);
+            const levelX = boxX + iconSize/2 - 8;
+            const levelY = boxY - iconSize/2 - 8;
+            const levelText = this.add.text(levelX, levelY, `Lv.${weapon.level}`, { fontSize: '12px', fill: '#ffff00', fontFamily: 'Arial', stroke: '#000000', strokeThickness: 2 }).setOrigin(1, 0).setScrollFactor(0);
             this.weaponUILevelTexts.push(levelText);
           }
         }
       });
     }
-    // '무기 목록' 텍스트 추가
-    this.weaponUIText = this.add.text(
-      inventoryX + inventoryWidth/2,
-      inventoryY - 8,
-      '무기 목록',
-      { fontSize: '18px', fill: '#fff', fontFamily: 'Arial', align: 'center', stroke: '#000', strokeThickness: 3 }
-    ).setOrigin(0.5, 1).setScrollFactor(0);
+    
+    this.weaponUIText = this.add.text(inventoryX + inventoryWidth/2, inventoryY - 8, '무기 목록', { fontSize: '18px', fill: '#fff', fontFamily: 'Arial', align: 'center', stroke: '#000', strokeThickness: 3 }).setOrigin(0.5, 1).setScrollFactor(0);
   }
 
-  // 무기 업그레이드 모달 표시
   showWeaponUpgradeModal() {
     this.isPausedForWeaponUpgrade = true;
-    
-    // 게임 타이머와 물리 시뮬레이션 일시정지
     this.time.paused = true;
     this.physics.world.pause();
     
     this.weaponUpgradeModalInstance = new WeaponUpgradeModal(this, this.player, () => {
       this.isPausedForWeaponUpgrade = false;
       this.weaponUpgradeModalInstance = null;
-      
-      // 게임 타이머와 물리 시뮬레이션 재개
       this.time.paused = false;
       this.physics.world.resume();
     });
   }
-
-
-  spawnBoss() {
-  const x = this.player.x + 300;
-  const y = this.player.y + 300;
-  const boss = new Boss(this, x, y, this.player);
-  this.bossGroup.add(boss);
-
-  this.physics.add.overlap(this.bullets, this.bossGroup, this.handleBulletMonsterCollision, null, this);
-  this.physics.add.overlap(this.player, this.bossGroup, this.handlePlayerHit, null, this);
-
-  console.log('👹 보스 등장!');
-}
-
-
+  
+  // spawnRandomMonster 콜백 함수가 없어서 추가
+  spawnRandomMonster() {
+    spawnMonster(this, this.player, this.monsters);
+  }
 }

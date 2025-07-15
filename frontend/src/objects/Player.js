@@ -21,13 +21,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.setScale(0.08); // 원하는 스케일
 
     // 콜라이더를 원본 이미지 테두리에 맞춤
-    const tex = this.texture.getSourceImage();
-    this.body.setSize(tex.width, tex.height);
-    this.body.setOffset(0, 0);
-
-    // 콜라이더 설정 확인
-    console.log('Player collider set:', this.body.width, 'x', this.body.height);
-    console.log('Player position:', this.x, this.y);
+    this.body.setSize(864, 858);
+    this.body.setOffset(50, 80);
     
     this.setCollideWorldBounds(true)
     // 플레이어가 획득한 무기 목록 (key: 무기이름, value: 무기 인스턴스)

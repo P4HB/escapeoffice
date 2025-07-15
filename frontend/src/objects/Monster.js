@@ -118,6 +118,15 @@ export default class Monster extends Phaser.Physics.Arcade.Sprite {
       if (this.scene.weapons) {
         this.scene.weapons.add(drop);
       }
+      this.scene.tweens.add({
+        targets: drop,
+        alpha: 0,
+        duration: 1000,
+        delay: 7000, // 총 8초 뒤에 완전 사라짐
+        onComplete: () => {
+          drop.destroy();
+        }
+      });
     }
     // 경험치 드랍 (체력에 비례, 최소 5)
     const expAmount = Math.max(10, Math.round(this.hp * 0.7*3));

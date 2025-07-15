@@ -47,6 +47,11 @@ export default class GameScene extends Phaser.Scene {
     this.load.image('map3','/src/assets/map/map3.png');
     this.load.image('exp', 'src/assets/images/exp.png');
     this.load.image('boss', '/src/assets/boss/boss.png');
+    this.load.image('coffee_max','/src/assets/weapon/coffee_max.png');
+    this.load.image('usb_max','/src/assets/weapon/usb_max.png');
+    this.load.image('mouse_max','/src/assets/weapon/mouse_max.png');
+    this.load.image('bomb_max','/src/assets/weapon/printer_max.png');
+    this.load.image('typing_max','/src/assets/weapon/typing_max.png');
     // this.load.html('chatForm', 'src/ui/chatForm.html'); // 이제 이 줄은 필요 없습니다.
   }
 
@@ -622,18 +627,21 @@ export default class GameScene extends Phaser.Scene {
     if (this.player && this.player.obtainedWeapons) {
       Object.keys(this.player.obtainedWeapons).slice(0, 3).forEach((weaponKey, idx) => {
         if (WEAPON_IMAGE_KEYS.includes(weaponKey)) {
+          const weapon = this.player.obtainedWeapons[weaponKey];
           const x = inventoryX + boxPadding + idx * (iconSize + boxPadding) + iconSize/2;
           const y = inventoryY + boxPadding + iconSize/2;
-          const img = this.add.image(x, y, weaponKey).setScrollFactor(0).setDisplaySize(iconSize-8, iconSize-8);
+          const displayKey = weapon.level >= 7 ? `${weaponKey}_max` : weaponKey;
+
+          const img = this.add.image(x, y, displayKey).setScrollFactor(0).setDisplaySize(iconSize-8, iconSize-8);
           this.weaponUIImages.push(img);
           
-          const weapon = this.player.obtainedWeapons[weaponKey];
+
           if (weapon && weapon.level) {
             const boxX = inventoryX + boxPadding + idx * (iconSize + boxPadding) + iconSize/2;
             const boxY = inventoryY + boxPadding + iconSize/2;
             const levelX = boxX + iconSize/2 - 8;
             const levelY = boxY - iconSize/2 - 8;
-            const isMax = weapon.level >= 6;
+            const isMax = weapon.level >= 7;
             const levelText = this.add.text(
               levelX,
               levelY,

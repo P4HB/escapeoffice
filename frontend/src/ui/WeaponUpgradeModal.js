@@ -95,7 +95,7 @@ export default class WeaponUpgradeModal {
     };
   
     const weapon = this.player.obtainedWeapons[weaponKey];
-    const isMaxLevel = weapon?.level >= 6;
+    const isMaxLevel = weapon?.level >= 7;
   
     const optionBox = this.scene.add.rectangle(
       x + width / 2, y + height / 2,

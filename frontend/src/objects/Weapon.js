@@ -20,7 +20,8 @@ export class Weapon {
   }
 
   upgrade() {
-    if(this.level >=6){
+    if (this.level === 7  && this.bulletKey && !this.bulletKey.includes('_max')) {
+      this.bulletKey = this.bulletKey + '_max';
       return;
     }
     this.level += 1;
@@ -112,6 +113,7 @@ export class Coffee extends RangedWeapon {
 
   upgrade() {
     super.upgrade();
+
     // 커피 특별 업그레이드: 데미지 추가 증가
     this.damage = Math.floor(this.damage * 1.2); // 총 44% 증가
   }
@@ -178,7 +180,7 @@ export class MouseWeapon extends RangedWeapon {
   upgrade() {
     super.upgrade();
     // 마우스 특별 업그레이드: 발사 속도 증가
-    this.cooldown = Math.floor(this.cooldown * 0.75); // 25% 빨라짐
+    this.cooldown = Math.floor(this.cooldown * 0.9); // 25% 빨라짐
   }
 }
 
@@ -205,21 +207,22 @@ export class BombWeapon extends Weapon {
 
   fire() {
     // 플레이어 위치에 프린터 설치
-    const bomb = new BombObject(this.scene, this.player.x, this.player.y, this.damage, this.bombLife, this.explosionRadius);
+    const textureKey = this.level >= 7 ? 'bomb_max' : 'bomb';
+    const bomb = new BombObject(this.scene, this.player.x, this.player.y, this.damage, this.bombLife, this.explosionRadius,textureKey);
     this.scene.bombs.add(bomb);
   }
 
   upgrade() {
     super.upgrade();
     // 폭탄 특별 업그레이드: 폭발 범위 증가
-    this.explosionRadius = Math.floor(this.explosionRadius * 1.4); // 40% 증가
+    this.explosionRadius = Math.floor(this.explosionRadius * 1.1); // 40% 증가
   }
 }
 
 // 프린터(지뢰) 오브젝트
 export class BombObject extends Phaser.Physics.Arcade.Sprite {
-  constructor(scene, x, y, damage, life, explosionRadius = 100) {
-    super(scene, x, y, 'bomb');
+  constructor(scene, x, y, damage, life, explosionRadius = 100, textureKey='bomb') {
+    super(scene, x, y, textureKey);
     scene.add.existing(this);
     scene.physics.add.existing(this);
     this.setOrigin(0.5, 0.5);
@@ -239,7 +242,7 @@ export class BombObject extends Phaser.Physics.Arcade.Sprite {
 
 // 회전 무기 클래스 (Spinning Weapon)
 export class SpinningWeapon extends Weapon {
-  constructor(scene, player, weaponKey, damage = 10, rotationRadius = 80) {
+  constructor(scene, player, weaponKey, damage = 10, rotationRadius = 1) {
     super(scene, player);
     this.weaponKey = weaponKey;
     this.damage = damage;
@@ -250,8 +253,12 @@ export class SpinningWeapon extends Weapon {
   }
 
   update(time) {
-    // 레벨에 따라 무기 인스턴스 수 조정
-    const instanceCount = this.level;
+    // 레벨에 따라 무기 인스턴스 수 o
+
+    let instanceCount = this.level;
+    if (this.level ===7){
+      instanceCount = 6;
+    }
     const angleStep = (2 * Math.PI) / instanceCount; // 360도 / 인스턴스 수
     
     // 필요한 만큼 인스턴스 생성
@@ -355,19 +362,26 @@ export class SpinningWeaponInstance extends Phaser.GameObjects.Sprite {
 // Typing 무기
 export class Typing extends SpinningWeapon {
   constructor(scene, player) {
-    super(scene, player, 'typing', 1000, 150);
+    super(scene, player, 'typing', 1000, 120);
     this.rotationSpeed = 2.5; // Typing는 조금 더 빠르게 회전
   }
 
   upgrade() {
     super.upgrade();
     // Typing 특별 업그레이드: 회전 반경 증가
+    if (this.level === 7 && this.weaponKey && !this.weaponKey.includes('_max')) {
+      this.weaponKey = this.weaponKey + '_max';
+    }
     this.rotationRadius = Math.floor(this.rotationRadius * 1.1); // 10% 증가
     
     // 기존 인스턴스들의 회전 반경도 업데이트
     this.instances.forEach(instance => {
       if (instance && instance.active) {
         instance.rotationRadius = this.rotationRadius;
+        if (this.level >= 7) {
+          const newKey = this.weaponKey.includes('_max') ? this.weaponKey : `${this.weaponKey}_max`;
+          instance.setTexture(newKey);
+        }
       }
     });
   }

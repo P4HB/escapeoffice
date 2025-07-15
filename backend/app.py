@@ -3,16 +3,23 @@
 from flask import Flask
 from flask_cors import CORS  # ✅ CORS 임포트
 
+
+# 클라우드 용 프론트 서빙
+
+from flask import send_from_directory
+import os
+
 # 우리가 만든 DB 테이블 모델과 라우트 등록 코드
 from models.user_model import Base
 from db_config import engine
 from routes.user_routes import user_bp
 
-app = Flask(__name__)
+dist_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../frontend/dist'))
+app = Flask(__name__, static_folder=dist_dir, static_url_path='')
 
 # 🔐 보안 고려한 최소 허용 CORS
 CORS(app,
-     resources={r"/*": {"origins": ["http://127.0.0.1:5173"]}},
+     resources={r"/*": {"origins": ["http://172.20.12.200"]}},
      supports_credentials=True)
 
 
@@ -23,8 +30,15 @@ Base.metadata.create_all(bind=engine)
 app.register_blueprint(user_bp, url_prefix='/api')
 
 @app.route('/')
-def home():
-    return '✅ 서버 + DB 연결 성공!'
+# def home():
+#   return '✅ 서버 + DB 연결 성공!'
+def serve_index():
+    return send_from_directory(app.static_folder, 'index.html')
+
+
+@app.route('/<path:path>')
+def serve_static(path):
+    return send_from_directory(app.static_folder, path)
 
 
 # @app.after_request
@@ -38,4 +52,4 @@ def home():
 
 # ✅ 서버 실행: 반드시 host는 'localhost'!
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=80, debug=True)

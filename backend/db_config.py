@@ -8,7 +8,9 @@ from sqlalchemy.orm import sessionmaker
 # 'root' → MySQL 기본 계정
 # 'localhost' → 내 컴퓨터
 # 'escape_db' → 방금 네가 만든 DB 이름
-DB_URL = "mysql+pymysql://root@localhost/escape_db"
+# DB_URL = "mysql+pymysql://root@localhost/escape_db"
+DB_URL = "mysql+pymysql://root:1234@localhost/escape_db"
+
 
 # SQLAlchemy의 'engine'은 MySQL과의 연결을 실제로 만들어주는 역할을 함
 engine = create_engine(DB_URL)

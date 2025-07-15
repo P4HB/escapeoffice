@@ -109,6 +109,10 @@ export default class GameScene extends Phaser.Scene {
 
     this.cameras.main.startFollow(this.player);
     this.monsters = this.physics.add.group({ classType : Monster, runChildUpdate : true });
+    this.bossGroup = this.physics.add.group();
+
+
+
 
     this.physics.add.overlap(this.player, this.monsters, this.handlePlayerHit, null, this);
     this.physics.add.overlap(this.bullets, this.monsters, this.handleBulletMonsterCollision, null, this);
@@ -130,6 +134,7 @@ export default class GameScene extends Phaser.Scene {
 
     this.physics.add.overlap(this.player, this.weapons, this.handleWeaponPickup, null, this);
     this.physics.add.overlap(this.monsters, this.bombs, this.handleBombHit, null, this);
+    this.physics.add.overlap(this.bossGroup, this.bombs, this.handleBombHit, null, this);
     this.physics.add.overlap(this.player, this.exps, this.handleExpPickup, null, this);
     this.physics.add.overlap(this.player, this.usableItems, this.handleUsableItemPickup, null, this);
 
@@ -140,7 +145,6 @@ export default class GameScene extends Phaser.Scene {
     this.drawWeaponUI();
     this.drawUsableItemUI();
 
-    this.bossGroup = this.physics.add.group();
     // this.physics.add.overlap(this.player, this.boss, this.handlePlayerHit, null, this); // 'this.boss'는 존재하지 않음. 보스 그룹과 충돌처리해야함
   }
 

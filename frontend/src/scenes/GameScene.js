@@ -24,8 +24,8 @@ export default class GameScene extends Phaser.Scene {
     this.chatHistory = []; // 대화 기록을 저장할 배열
     this.kimDaeRiMood = 0; // 김대리의 기분 점수 (0에서 시작)
     this.chatUIElements = []; // 채팅 UI DOM 요소들을 관리할 배열
-    this.chatcount = 0;
-
+    this.chatCount = 0;
+    this.maxChatCount = 10;
     // ✅ 1. 채팅 폼을 직접 저장할 속성을 추가합니다.
     this.chatFormComponent = null;
   }
@@ -218,9 +218,22 @@ export default class GameScene extends Phaser.Scene {
           <button name="sendButton">전송</button>
         </div>
       </div>
-    `;
+    `;12
     const chatForm = this.add.dom(centerX, centerY).createFromHTML(chatHTML);
     
+    const kimImg = document.createElement("img");
+    kimImg.src = "/public/daeri.png";
+    kimImg.id = "daeri-img";
+    kimImg.style.position = "absolute";
+    kimImg.style.top = "80px";
+    kimImg.style.left = "50%";
+    kimImg.style.transform = "translateX(-50%)";
+    kimImg.style.width = "180px";
+    kimImg.style.borderRadius = "10px";
+    kimImg.style.zIndex = "999";
+    console.log("김대리 이미지 추가!");
+    document.body.appendChild(kimImg);
+
     chatForm.setScrollFactor(0);
     
     // ✅ 4. 직접 참조 저장 및 배열에 추가
@@ -265,9 +278,15 @@ export default class GameScene extends Phaser.Scene {
 
   async handlePlayerMessage(message) {
     this.appendMessageToLog(`나: ${message}`);
-
+    this.chatCount++;
     if (message.includes("가볼게요") || message.includes("가보겠습니다") || message.includes("그만")) {
       this.appendMessageToLog("김대리: 네, 그럼 부장님께 잘 말씀드려주세요.");
+      this.endChatAndSpawnBoss();
+      return;
+    }
+
+    if (this.chatCount >= this.maxChatCount) {
+      this.appendMessageToLog("김대리: 이제 저희 부장님을 만나러 가시죠...");
       this.endChatAndSpawnBoss();
       return;
     }
@@ -295,7 +314,8 @@ export default class GameScene extends Phaser.Scene {
       this.chatHistory.push({ role: 'model', content: data.response });
       
       this.appendMessageToLog(`김대리: ${data.response}`);
-      console.log(`[기분 변화: ${data.moodChange}] [현재 기분 점수: ${this.kimDaeRiMood}]`);
+      this.appendMessageToLog(`[남은 대화 횟수: ${this.maxChatCount - this.chatCount}]`);
+      this.appendMessageToLog(`[기분 변화: ${data.moodChange}] [현재 기분 점수: ${this.kimDaeRiMood}]`);
 
     } catch (error) {
       console.error("채팅 서버 통신 오류:", error);
@@ -309,8 +329,12 @@ export default class GameScene extends Phaser.Scene {
     this.isChattingWithKim = false;
 
     this.chatUIElements.forEach(element => element.destroy());
+    
     this.chatUIElements = [];
     this.chatFormComponent = null; // 참조 초기화
+    
+    const kimImg = document.getElementById("daeri-img");
+    if (kimImg) kimImg.remove();
 
     this.physics.world.resume();
     this.monsterSpawnTimer1.paused = false;

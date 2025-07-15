@@ -83,7 +83,7 @@ export default class WeaponUpgradeModal {
       usb: '💾 USB',
       mouse: '🖱️ 마우스',
       bomb: '💣 프린터',
-      typing: '🎧 Typing'
+      typing: '⌨️ 키보드'
     };
 
     const weaponDescriptions = {
@@ -186,7 +186,7 @@ export default class WeaponUpgradeModal {
       usb: '💾 USB',
       mouse: '🖱️ 마우스',
       bomb: '💣 프린터',
-      typing: '🎧 Typing'
+      typing: '⌨️ 키보드'
     };
 
     // 효과 텍스트

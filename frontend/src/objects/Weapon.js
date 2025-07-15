@@ -352,7 +352,7 @@ export class SpinningWeaponInstance extends Phaser.GameObjects.Sprite {
 // Typing 무기
 export class Typing extends SpinningWeapon {
   constructor(scene, player) {
-    super(scene, player, 'typing', 1000, 100);
+    super(scene, player, 'typing', 1000, 150);
     this.rotationSpeed = 2.5; // Typing는 조금 더 빠르게 회전
   }
 

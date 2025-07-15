@@ -2,14 +2,18 @@
 import { ExpObject } from './Exp.js';
 
 export default class Boss extends Phaser.Physics.Arcade.Sprite {
-  constructor(scene, x, y, player) {
+  // ✨ 1. 생성자에 health와 damage 파라미터 추가
+  constructor(scene, x, y, player, health = 700, damage = 50) {
     super(scene, x, y, 'boss');
 
     this.scene = scene;
     this.player = player;
-    this.hp = 700;
-    this.maxHp = 700;
     this.speed = 40;
+
+    // ✨ 2. 전달받은 값으로 보스 스펙 설정
+    this.hp = health;
+    this.maxHp = health; // maxHp도 동적으로 설정해야 체력바가 정상 작동합니다.
+    this.damage = damage; // GameScene에서 계산된 공격력을 저장합니다. (추후 보스 공격 로직에 사용 가능)
 
     scene.add.existing(this);
     scene.physics.add.existing(this);
@@ -52,34 +56,25 @@ export default class Boss extends Phaser.Physics.Arcade.Sprite {
   }
 
   updateHpBar() {
-  // ⭐ 체력바 고정 길이로 (예: 100픽셀)
-  const barWidth = 500;
-  const barHeight = 6;
+    const barWidth = 500;
+    const barHeight = 6;
+    const barX = this.x - barWidth / 2;
+    const barY = this.y - (this.displayHeight / 2) - 20;
 
-  // ⭐ 바 좌표 계산 (보스 중심 기준)
-  const barX = this.x - barWidth / 2;
-  const barY = this.y - (this.displayHeight / 2) - 20;
+    const hpRatio = Math.max(0, this.hp / this.maxHp);
+    const fillColor = hpRatio > 0.5 ? 0x00ff00 : hpRatio > 0.2 ? 0xffa500 : 0xff0000;
 
-  // 체력 비율 계산
-  const hpRatio = Math.max(0, this.hp / this.maxHp);
-  const fillColor = hpRatio > 0.5 ? 0x00ff00 : hpRatio > 0.2 ? 0xffa500 : 0xff0000;
+    this.hpBarBg.clear();
+    this.hpBarBg.fillStyle(0x444444, 1);
+    this.hpBarBg.fillRect(barX, barY, barWidth, barHeight);
 
-  // 바 배경
-  this.hpBarBg.clear();
-  this.hpBarBg.fillStyle(0x444444, 1);
-  this.hpBarBg.fillRect(barX, barY, barWidth, barHeight);
+    this.hpBar.clear();
+    this.hpBar.fillStyle(fillColor, 1);
+    this.hpBar.fillRect(barX, barY, barWidth * hpRatio, barHeight);
 
-  // 체력 표시
-  this.hpBar.clear();
-  this.hpBar.fillStyle(fillColor, 1);
-  this.hpBar.fillRect(barX, barY, barWidth * hpRatio, barHeight);
-
-  // 체력 숫자 표시
-  this.hpText.setText(`${Math.max(0, Math.round(this.hp))}`);
-  this.hpText.setPosition(this.x, barY - 2);
-}
-
-
+    this.hpText.setText(`${Math.max(0, Math.round(this.hp))}`);
+    this.hpText.setPosition(this.x, barY - 2);
+  }
 
   takeDamage(amount) {
     this.hp -= amount;
@@ -91,27 +86,20 @@ export default class Boss extends Phaser.Physics.Arcade.Sprite {
   }
 
   die() {
-  console.log('💀 보스 처치됨!');
+    console.log('💀 보스 처치됨!');
 
-  // 경험치 드랍
-  const exp = new ExpObject(this.scene, this.x, this.y, 150);
-  if (this.scene.exps) {
-    this.scene.exps.add(exp);
+    const exp = new ExpObject(this.scene, this.x, this.y, 150);
+    if (this.scene.exps) {
+      this.scene.exps.add(exp);
+    }
+
+    const elapsedTime = (this.scene.time.now - this.scene.startTime) / 1000;
+    this.scene.scene.start('ClearScene', { clearTime: elapsedTime });
+
+    if (this.hpBarBg) this.hpBarBg.destroy();
+    if (this.hpBar) this.hpBar.destroy();
+    if (this.hpText) this.hpText.destroy();
+
+    this.destroy();
   }
-
-  const elapsedTime = (this.scene.time.now - this.scene.startTime) / 1000;
-
-    // ✅ 클리어 씬으로 전환
-
-  this.scene.scene.start('ClearScene', { clearTime: elapsedTime });
-
-  // 체력바 제거
-  if (this.hpBarBg) this.hpBarBg.destroy();
-  if (this.hpBar) this.hpBar.destroy();
-  if (this.hpText) this.hpText.destroy();
-
-
-  this.destroy(); // 보스 자체 제거
-}
-
 }

@@ -100,6 +100,10 @@ export default class Monster extends Phaser.Physics.Arcade.Sprite {
   }
 
   takeDamage(amount) {
+    this.setTint(0xff0000);
+    this.scene.time.delayedCall(100, () => {
+      this.clearTint(); // 1초 후 원래 색으로 복귀
+    });
     this.hp -= amount;
     if (this.hp <= 0) {
       this.die();
@@ -122,7 +126,7 @@ export default class Monster extends Phaser.Physics.Arcade.Sprite {
         targets: drop,
         alpha: 0,
         duration: 1000,
-        delay: 7000, // 총 8초 뒤에 완전 사라짐
+        delay: 3000, // 총 8초 뒤에 완전 사라짐
         onComplete: () => {
           drop.destroy();
         }

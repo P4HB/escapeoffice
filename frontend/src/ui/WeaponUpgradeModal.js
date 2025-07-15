@@ -171,6 +171,9 @@ export default class WeaponUpgradeModal {
 
 
   upgradeWeapon(weaponKey) {
+    if (!this.isActive) return; // ✅ 중복 방지
+
+    this.isActive = false; // ✅ 중복 클릭 방지
     const weapon = this.player.obtainedWeapons[weaponKey];
     if (weapon) {
       // 무기 업그레이드 적용

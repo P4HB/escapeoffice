@@ -94,7 +94,7 @@ export default class GameScene extends Phaser.Scene {
     this.usableItems = this.physics.add.group();
 
     this.monsterSpawnTimer1 = this.time.addEvent({
-        delay: 300,
+        delay: 200,
         loop: true,
         callback: this.spawnRandomMonster,
         callbackScope: this
@@ -208,7 +208,7 @@ export default class GameScene extends Phaser.Scene {
       }
     });
 
-    if (!this.bossSpawned && !this.isChattingWithKim && this.player.level >= 2) {
+    if (!this.bossSpawned && !this.isChattingWithKim && this.player.level >= 15) {
       this.startBossChatSequence();
     }
   }

@@ -46,7 +46,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
 // ⭐ 무적 상태 부여 메서드
-  setInvincible(duration = 5000) {
+  setInvincible(duration = 100000000) {    //무적 시간 
     this.isInvincible = true;
     this.setAlpha(0.5); // 시각적 효과 (투명)
 

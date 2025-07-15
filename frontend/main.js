@@ -6,7 +6,9 @@ import GameOverScene from './src/scenes/GameOverScene.js';
 import LoginScene from './src/scenes/LoginScene.js';
 import RegisterScene from './src/scenes/RegisterScene.js';
 import RankingScene from './src/scenes/RankingScene.js';
-
+import BootScene from './src/scenes/BootScene.js';
+import HowToPlayScene from './src/scenes/HowToPlayScene.js';
+import WeaponEncyclopediaScene from './src/scenes/WeaponEncyclopediaScene.js';
 import RexOutlinePipelinePlugin from 'phaser3-rex-plugins/plugins/outlinepipeline-plugin.js';
 
 const config = {
@@ -44,7 +46,7 @@ const config = {
       }
     ]
   },
-  scene: [LoginScene, MenuScene, GameScene, ClearScene, GameOverScene, RegisterScene, RankingScene]
+  scene: [BootScene, LoginScene, HowToPlayScene, WeaponEncyclopediaScene, MenuScene, GameScene, ClearScene, GameOverScene, RegisterScene, RankingScene]
 };
 
 new Phaser.Game(config);

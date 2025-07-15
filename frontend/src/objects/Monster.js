@@ -28,14 +28,29 @@ export default class Monster extends Phaser.Physics.Arcade.Sprite {
     this.setScale(stats.scale);
 
     // 콜라이더를 원본 이미지 테두리에 맞춤
-    const tex = this.texture.getSourceImage();
-    this.body.setSize(tex.width, tex.height);
-    this.body.setOffset(0, 0);
-
-    // 콜라이더 설정 확인
-    console.log('Monster', textureKey, 'collider set:', this.body.width, 'x', this.body.height);
-    console.log('Monster position:', this.x, this.y);
-
+    switch (textureKey) {
+      case 'boojang':
+        this.body.setSize(428, 686);     // 80% of 535x857
+        this.body.setOffset(291, 183);   // 중앙 유지
+        break;
+      case 'gwajang':
+        this.body.setSize(503, 681);     // 80% of 629x851
+        this.body.setOffset(318, 209);   // 중앙 유지
+        break;
+      case 'file':
+        this.body.setSize(602, 621);     // 80% of 752x777
+        this.body.setOffset(186, 217);   // 중앙 유지
+        break;
+      case 'bogoseo':
+        this.body.setSize(730, 807);     // 80% of 913x1009
+        this.body.setOffset(194, 110);   // 중앙 유지
+        break;
+      default:
+        const tex = this.texture.getSourceImage();
+        this.body.setSize(tex.width, tex.height);
+        this.body.setOffset(0, 0);
+    }
+    this.body.debugShowBody = true;
     this.setCollideWorldBounds(true);
 
     // HP 바용 Graphics와 텍스트 생성

@@ -69,6 +69,7 @@ export default class LoginScene extends Phaser.Scene {
       this.shutdown();
       this.scene.start('RegisterScene');
     });
+    // 게임 설명 버튼
 
     // 창 크기 바뀔 때 반응형 입력창 조절
     window.addEventListener('resize', this.resizeInputs);

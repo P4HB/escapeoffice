@@ -629,7 +629,20 @@ export default class GameScene extends Phaser.Scene {
             const boxY = inventoryY + boxPadding + iconSize/2;
             const levelX = boxX + iconSize/2 - 8;
             const levelY = boxY - iconSize/2 - 8;
-            const levelText = this.add.text(levelX, levelY, `Lv.${weapon.level}`, { fontSize: '12px', fill: '#ffff00', fontFamily: 'Arial', stroke: '#000000', strokeThickness: 2 }).setOrigin(1, 0).setScrollFactor(0);
+            const isMax = weapon.level >= 6;
+            const levelText = this.add.text(
+              levelX,
+              levelY,
+              isMax ? 'MAX' : `Lv.${weapon.level}`,
+              {
+                fontSize: isMax ? '14px' : '12px',
+                fill: isMax ? '#ff4444' : '#ffff00',
+                fontFamily: 'Arial',
+                fontStyle: isMax ? 'bold' : 'normal',
+                stroke: '#000000',
+                strokeThickness: 2
+              }
+            ).setOrigin(1, 0).setScrollFactor(0);
             this.weaponUILevelTexts.push(levelText);
           }
         }

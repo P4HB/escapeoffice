@@ -85,7 +85,7 @@ export default class WeaponUpgradeModal {
       bomb: '💣 프린터',
       typing: '🎧 Typing'
     };
-
+  
     const weaponDescriptions = {
       coffee: '데미지 +20%',
       usb: '사정거리 +30%',
@@ -93,19 +93,37 @@ export default class WeaponUpgradeModal {
       bomb: '폭발범위 +40%',
       typing: '회전속도 +20%'
     };
-
-    // 옵션 박스
+  
+    const weapon = this.player.obtainedWeapons[weaponKey];
+    const isMaxLevel = weapon?.level >= 6;
+  
     const optionBox = this.scene.add.rectangle(
       x + width / 2, y + height / 2,
       width, height,
-      0x444444, 0.8
+      0x444444, isMaxLevel ? 0.5 : 0.8
     )
-      .setStrokeStyle(2, 0x888888)
+      .setStrokeStyle(2, isMaxLevel ? 0x999999 : 0x888888)
       .setScrollFactor(0)
-      .setDepth(1002)
-      .setInteractive();
-
-    // 무기 아이콘
+      .setDepth(1002);
+  
+    if (!isMaxLevel) {
+      optionBox.setInteractive();
+  
+      optionBox.on('pointerover', () => {
+        optionBox.setStrokeStyle(3, 0xf0db4f);
+        optionBox.setFillStyle(0x555555, 0.9);
+      });
+  
+      optionBox.on('pointerout', () => {
+        optionBox.setStrokeStyle(2, 0x888888);
+        optionBox.setFillStyle(0x444444, 0.8);
+      });
+  
+      optionBox.on('pointerdown', () => {
+        this.upgradeWeapon(weaponKey);
+      });
+    }
+  
     const iconSize = 40;
     const icon = this.scene.add.image(
       x + 30, y + height / 2,
@@ -114,51 +132,34 @@ export default class WeaponUpgradeModal {
       .setDisplaySize(iconSize, iconSize)
       .setScrollFactor(0)
       .setDepth(1003);
-
-    // 무기 이름
+  
     const nameText = this.scene.add.text(
       x + 80, y + 15,
-      weaponNames[weaponKey] || weaponKey,
+      isMaxLevel ? `${weaponNames[weaponKey]} (MAX)` : weaponNames[weaponKey],
       {
         fontSize: '16px',
-        fill: '#ffffff',
+        fill: isMaxLevel ? '#ff4444' : '#ffffff',
         fontFamily: 'Arial Black',
+        fontStyle: isMaxLevel ? 'bold' : 'normal',
         stroke: '#000000',
         strokeThickness: 2
       }
     )
       .setScrollFactor(0)
       .setDepth(1003);
-
-    // 업그레이드 설명
+  
     const descText = this.scene.add.text(
       x + 80, y + 35,
-      weaponDescriptions[weaponKey] || '업그레이드 효과',
+      isMaxLevel ? '최대 레벨에 도달했습니다!' : (weaponDescriptions[weaponKey] || '업그레이드 효과'),
       {
         fontSize: '14px',
-        fill: '#cccccc',
+        fill: isMaxLevel ? '#999999' : '#cccccc',
         fontStyle: 'italic'
       }
     )
       .setScrollFactor(0)
       .setDepth(1003);
-
-    // 호버 효과
-    optionBox.on('pointerover', () => {
-      optionBox.setStrokeStyle(3, 0xf0db4f);
-      optionBox.setFillStyle(0x555555, 0.9);
-    });
-
-    optionBox.on('pointerout', () => {
-      optionBox.setStrokeStyle(2, 0x888888);
-      optionBox.setFillStyle(0x444444, 0.8);
-    });
-
-    // 클릭 이벤트
-    optionBox.on('pointerdown', () => {
-      this.upgradeWeapon(weaponKey);
-    });
-
+  
     return {
       box: optionBox,
       icon: icon,

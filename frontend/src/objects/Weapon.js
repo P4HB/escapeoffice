@@ -20,6 +20,9 @@ export class Weapon {
   }
 
   upgrade() {
+    if(this.level >=6){
+      return;
+    }
     this.level += 1;
     // 기본 업그레이드: 데미지 증가
     this.damage = Math.floor(this.damage * 1.2);

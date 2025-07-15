@@ -30,9 +30,9 @@ export default class MenuScene extends Phaser.Scene {
 
     // 캐릭터 이미지
     this.add.image(width / 2, playerY, 'player')
-      .setScale(0.1)
+      .setScale(0.3)
       .setOrigin(0.5);
-
+    
     // 안내 텍스트
     const instruction = this.add.text(width / 2, instructionY, '[스페이스바] 눌러서 출근하기', {
       fontSize: '22px',
@@ -54,29 +54,56 @@ export default class MenuScene extends Phaser.Scene {
       this.scene.start('GameScene');
     });
 
+    const menuBaseY = height / 2 + 50;
+    const buttonGap = 50;
 
-  // ✅ 랭킹 버튼 추가
-  const rankingBtn = this.add.text(width / 2, height / 2 + 100, '[🏆 랭킹 보기]', {
-    fontSize: '24px',
-    fill: '#00ffff'
-  }).setOrigin(0.5);
+    const buttons = [
+      {
+        label: '[📘 무기백과]',
+        color: '#00d8ff',
+        scene: 'WeaponEncyclopediaScene'
+      },
+      {
+        label: '[❓ 게임 설명]',
+        color: '#ff77ff',
+        scene: 'HowToPlayScene'
+      },
+      {
+        label: '[🏆 랭킹 보기]',
+        color: '#00ffff',
+        scene: 'RankingScene'
+      },
+      {
+        label: '[🚪 로그아웃]',
+        color: '#ff5555',
+        onClick: () => {
+          localStorage.removeItem('user_id');
+          alert('로그아웃 되었습니다!');
+          this.scene.start('LoginScene');
+        }
+      }
+    ];
 
-  rankingBtn.setInteractive().on('pointerdown', () => {
-    this.scene.start('RankingScene');
-  });
-
-
-  // 로그아웃 버튼 (여기에 추가)
-  const logoutBtn = this.add.text(width / 2, height / 2 + 150, '[🚪 로그아웃]', {
-    fontSize: '24px',
-    fill: '#ff5555',
-  }).setOrigin(0.5).setInteractive();
-
-  logoutBtn.on('pointerdown', () => {
-    localStorage.removeItem('user_id');
-    alert('로그아웃 되었습니다!');
-    this.scene.start('LoginScene');
-  });
+    const menuY = height / 2 + 180; // 버튼들의 Y 위치 (캐릭터 아래쪽)
+    const buttonSpacing = 200; // 버튼 간 X 간격
+    const startX = width / 2 - ((buttons.length - 1) * buttonSpacing) / 2;
+    
+    buttons.forEach((btn, i) => {
+      const x = startX + i * buttonSpacing;
+      const buttonText = this.add.text(x, menuY, btn.label, {
+        fontSize: '24px',
+        fill: btn.color,
+      }).setOrigin(0.5).setInteractive();
+    
+      buttonText.on('pointerdown', () => {
+        if (btn.scene) {
+          this.shutdown?.();
+          this.scene.start(btn.scene);
+        } else if (btn.onClick) {
+          btn.onClick();
+        }
+      });
+    });
 
 
   }

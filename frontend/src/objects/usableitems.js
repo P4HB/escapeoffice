@@ -194,6 +194,26 @@ export class DroppedReportItem extends Phaser.Physics.Arcade.Sprite {
     this.setDepth(10);
     this.reportText = reportText;
     this.body.setAllowGravity(false);
+
+    // 🟢 bobbing effect 설정
+    this.baseY = y;
+    this.bobTime = 0;
+
+    // 🟢 rexOutlinePipeline 적용
+    this.setPipeline('rexOutlinePipeline');
+    this.setPipelineData('thickness', 4);
+    this.setPipelineData('outlineColor', [1, 1, 0.2]); // 노란 계열
+
+    
+  }
+
+  preUpdate(time, delta) {
+    super.preUpdate(time, delta);
+    
+    // bobbing effect 적용
+    this.bobTime += delta;
+    const bobOffset = Math.sin(this.bobTime * 0.005) * 6;
+    this.y = this.baseY + bobOffset;
   }
 }
 

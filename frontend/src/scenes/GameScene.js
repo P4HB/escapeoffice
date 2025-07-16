@@ -202,20 +202,17 @@ export default class GameScene extends Phaser.Scene {
     }
 
     this.time.addEvent({
-      delay: 5000,
+      delay: 1000,
       callback: () => {
-        const px = this.player.x;
-        const py = this.player.y;
-    
-        const offsetX = Phaser.Math.Between(-100, 100);
-        const offsetY = Phaser.Math.Between(-100, 100);
-        const dropX = px + offsetX;
-        const dropY = py + offsetY;
-    
-        const reportText = this.kimReport || '**📄 보고서 내용 없음**';
-        const reportItem = new DroppedReportItem(this, dropX, dropY, reportText);
-        this.reports.add(reportItem);
-      },
+    // 💡 전체 맵 크기 기준 랜덤 위치
+          const mapBounds = this.physics.world.bounds;
+          const dropX = Phaser.Math.Between(mapBounds.x + 50, mapBounds.width - 50);
+          const dropY = Phaser.Math.Between(mapBounds.y + 50, mapBounds.height - 50);
+
+          const reportText = this.kimReport || '**📄 보고서 내용 없음**';
+          const reportItem = new DroppedReportItem(this, dropX, dropY, reportText);
+          this.reports.add(reportItem);
+        },
       callbackScope: this,
       loop: true
     });

@@ -26,3 +26,4 @@ export default class EmailProjectile extends Phaser.Physics.Arcade.Sprite {
     this.scene.time.delayedCall(3000, () => this.destroy(), null, this);
   }
 }
+ 

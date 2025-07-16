@@ -4,7 +4,7 @@ import Monster from '../objects/Monster.js';
 import { spawnMonster } from '../systems/monsterspawn.js'
 import { DroppedWeapon, BombObject } from '../objects/Weapon.js';
 import { ExpObject } from '../objects/Exp.js';
-import { DroppedUsableItem, Skill } from '../objects/usableitems.js';
+import { DroppedUsableItem, Skill, DroppedReportItem } from '../objects/usableitems.js';
 import WeaponSwapModal from '../ui/WeaponSwapModal.js';
 import WeaponUpgradeModal from '../ui/WeaponUpgradeModal.js';
 import Boss from '../objects/Boss.js';
@@ -52,10 +52,12 @@ export default class GameScene extends Phaser.Scene {
     this.load.image('mouse_max','/src/assets/weapon/mouse_max.png');
     this.load.image('bomb_max','/src/assets/weapon/printer_max.png');
     this.load.image('typing_max','/src/assets/weapon/typing_max.png');
+    this.load.image('report','/src/assets/usableitem/report.png');
+    this.load.image('showreport','/src/assets/images/showreport.png');
     // this.load.html('chatForm', 'src/ui/chatForm.html'); // 이제 이 줄은 필요 없습니다.
   }
 
-  create() {
+  async create() {
     // 맵 이미지 추가 및 변수에 저장
     const tileWidth = 1536;
     const tileHeight = 1024;
@@ -82,6 +84,7 @@ export default class GameScene extends Phaser.Scene {
     this.weaponUpgradeModalInstance = null;
     this.bossSpawned = false;
     this.isChattingWithKim = false;
+    this.isReadingReport = false;
     this.chatHistory = [];
     this.kimDaeRiMood = 0;
     this.chatUIElements = [];
@@ -93,6 +96,7 @@ export default class GameScene extends Phaser.Scene {
     this.exps = this.physics.add.group();
     this.usableItems = this.physics.add.group();
     this.spinningWeapons = this.physics.add.group();
+    this.reports = this.physics.add.group();
 
     this.monsterSpawnTimer1 = this.time.addEvent({
         delay: 200,
@@ -141,6 +145,8 @@ export default class GameScene extends Phaser.Scene {
       null, 
       this  
     );
+    this.physics.add.overlap(this.player, this.reports, this.handleReportPickup, null, this);
+
     this.monsterSpawnTimer2 = this.time.addEvent({
         delay: 2000,
         loop: true,
@@ -168,7 +174,38 @@ export default class GameScene extends Phaser.Scene {
     this.weaponUIText = null;
     this.drawWeaponUI();
     this.drawUsableItemUI();
+    try {
+      const res = await fetch('http://localhost:3000/api/start-game', {
+        method: 'POST'
+      });
+      const data = await res.json();
+      this.kimPrompt = data.kimPrompt;
+      this.kimReport = data.report;
+      console.log('[✅] 김대리 프롬프트 & 보고서 생성 완료');
+    } catch (err) {
+      console.error('[❌] /api/start-game 실패:', err);
+      this.kimPrompt = '기본 프롬프트';
+      this.kimReport = '보고서 없음';
+    }
 
+    this.time.addEvent({
+      delay: 5000,
+      callback: () => {
+        const px = this.player.x;
+        const py = this.player.y;
+    
+        const offsetX = Phaser.Math.Between(-100, 100);
+        const offsetY = Phaser.Math.Between(-100, 100);
+        const dropX = px + offsetX;
+        const dropY = py + offsetY;
+    
+        const reportText = this.kimReport || '**📄 보고서 내용 없음**';
+        const reportItem = new DroppedReportItem(this, dropX, dropY, reportText);
+        this.reports.add(reportItem);
+      },
+      callbackScope: this,
+      loop: true
+    });
     // this.physics.add.overlap(this.player, this.boss, this.handlePlayerHit, null, this); // 'this.boss'는 존재하지 않음. 보스 그룹과 충돌처리해야함
   }
 
@@ -189,10 +226,15 @@ export default class GameScene extends Phaser.Scene {
       monster.takeDamage(weaponInstance.damage);
     }
   }
-
+  handleReportPickup(player, report) {
+    if (!report || !report.reportText) return;
+  
+    this.showKimReport(report.reportText);
+    report.destroy();
+  }
   update(time,delta) {
     // 채팅 중일 때는 player.update()가 호출되지 않도록 수정
-    if (this.isPausedForWeaponSwap || this.isPausedForWeaponUpgrade || this.isChattingWithKim) {
+    if (this.isPausedForWeaponSwap || this.isPausedForWeaponUpgrade || this.isChattingWithKim || this.isReadingReport) {
       return;
     }
     this.player.update(time, this.cursors);
@@ -227,7 +269,7 @@ export default class GameScene extends Phaser.Scene {
       }
     });
 
-    if (!this.bossSpawned && !this.isChattingWithKim && this.player.level >= 15) {
+    if (!this.bossSpawned && !this.isChattingWithKim && this.player.level >= 2) {
       this.startBossChatSequence();
     }
   }
@@ -348,18 +390,19 @@ export default class GameScene extends Phaser.Scene {
   async handlePlayerMessage(message) {
     this.appendMessageToLog(`나: ${message}`);
     this.chatCount++;
+
     if (message.includes("가볼게요") || message.includes("가보겠습니다") || message.includes("그만")) {
       this.appendMessageToLog("김대리: 네, 그럼 부장님께 잘 말씀드려주세요.");
       this.endChatAndSpawnBoss();
       return;
     }
-
+  
     if (this.chatCount >= this.maxChatCount) {
       this.appendMessageToLog("김대리: 이제 저희 부장님을 만나러 가시죠...");
       this.endChatAndSpawnBoss();
       return;
     }
-
+  
     try {
       const response = await fetch('http://localhost:3000/api/chat', {
         method: 'POST',
@@ -369,28 +412,30 @@ export default class GameScene extends Phaser.Scene {
         body: JSON.stringify({
           message: message,
           history: this.chatHistory,
+          prompt: this.kimPrompt 
         }),
       });
-
+  
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+  
       const data = await response.json();
-
+  
       this.kimDaeRiMood += data.moodChange;
       this.chatHistory.push({ role: 'user', content: message });
-      this.chatHistory.push({ role: 'model', content: data.response });
-      
+      this.chatHistory.push({ role: 'assistant', content: data.response }); // 🛠️ role은 'assistant'로 통일
+  
       this.appendMessageToLog(`김대리: ${data.response}`);
       this.appendMessageToLog(`[남은 대화 횟수: ${this.maxChatCount - this.chatCount}]`);
       this.appendMessageToLog(`[기분 변화: ${data.moodChange}] [현재 기분 점수: ${this.kimDaeRiMood}]`);
-
+  
     } catch (error) {
       console.error("채팅 서버 통신 오류:", error);
       this.appendMessageToLog("[시스템] 서버와 통신 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
     }
   }
+  
 
   // ✅ 6. 직접 참조를 초기화하는 endChatAndSpawnBoss 함수
   endChatAndSpawnBoss() {
@@ -751,5 +796,78 @@ export default class GameScene extends Phaser.Scene {
   // spawnRandomMonster 콜백 함수가 없어서 추가
   spawnRandomMonster() {
     spawnMonster(this, this.player, this.monsters);
+  }
+  showKimReport(reportText) {
+    // 중복 생성 방지
+    if (this.reportUI) {
+      this.reportUI.bg.destroy();
+      this.reportUI.text.destroy();
+      this.reportUI.closeBtn.destroy();
+      this.reportUI = null;
+    }
+  
+    // 게임 정지
+    this.isReadingReport = true;
+    this.physics.world.pause();
+    this.monsterSpawnTimer1.paused = true;
+    this.monsterSpawnTimer2.paused = true;
+    this.usableItemSpawnTimer.paused = true;
+  
+    // 보고서 배경 이미지
+    const bg = this.add.image(this.cameras.main.centerX, this.cameras.main.centerY, 'showreport')
+      .setDisplaySize(this.scale.width * 0.9, this.scale.height * 0.9)
+      .setScrollFactor(0)
+      .setDepth(999);
+  
+    // 텍스트 박스
+    const title = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY - 250, '📄 거래처 김대리 보고서', {
+      fontSize: '28px',
+      fontFamily: 'Arial Black',
+      fill: '#222222'
+    }).setOrigin(0.5).setDepth(1002).setScrollFactor(0);
+    
+    // 본문 텍스트 (제목 아래에 위치)
+    const text = this.add.text(this.cameras.main.centerX, title.y + title.height + 20, reportText, {
+      fontSize: '20px',
+      fill: '#000000',
+      padding: { x: 20, y: 20 },
+      fontFamily: 'Arial',
+      align: 'left',
+      wordWrap: { width: this.scale.width * 0.6 }
+    }).setOrigin(0.5, 0) // 수직 방향 위 기준!
+      .setScrollFactor(0)
+      .setDepth(1000);
+    text.setLineSpacing(10);
+    // 닫기 버튼
+    const closeBtn = this.add.text(this.cameras.main.width - 50, 30, '❌', {
+      fontSize: '28px',
+      fill: '#ff0000'
+    }).setOrigin(1, 0)
+      .setInteractive()
+      .setScrollFactor(0)
+      .setDepth(1003)
+      .on('pointerdown', () => this.hideKimReport());
+  
+    // UI 요소 묶어서 저장
+    this.reportUI = { bg, title, text, closeBtn };
+  
+    // 5초 후 자동 닫기
+    this.time.delayedCall(5000, () => this.hideKimReport());
+  }
+  hideKimReport() {
+    if (this.reportUI) {
+      this.reportUI.bg.destroy();
+      this.reportUI.title.destroy();
+      this.reportUI.text.destroy();
+      this.reportUI.closeBtn.destroy();
+      this.reportUI = null;
+    }
+  
+    // 게임 재개
+    this.isReadingReport = false;
+    this.physics.world.resume();
+    this.monsterSpawnTimer1.paused = false;
+    this.monsterSpawnTimer2.paused = false;
+    this.usableItemSpawnTimer.paused = false;
   }
 }

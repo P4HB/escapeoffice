@@ -34,7 +34,7 @@ export default class Boss extends Monster {
     this.hpText = scene.add.text(0, 0, '', {
       fontSize: '12px', fill: '#fff', fontFamily: 'Arial', stroke: '#000', strokeThickness: 2
     }).setOrigin(0.5, 1);
-    const depth = 1000;
+    const depth = 500;
     this.hpBar.setDepth(depth);
     this.hpBarBg.setDepth(depth);
     this.hpText.setDepth(depth);

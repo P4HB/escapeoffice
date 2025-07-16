@@ -536,14 +536,16 @@ export default class GameScene extends Phaser.Scene {
       // ✅ 일반 몬스터 데미지 처리
       this.monsters.getChildren().forEach(targetMonster => {
         if (targetMonster.active) {
+          const monsterRadius = Math.max(targetMonster.displayWidth, targetMonster.displayHeight) / 2;
           const distance = Phaser.Math.Distance.Between(bombX, bombY, targetMonster.x, targetMonster.y);
-          if (distance <= explosionRadius && typeof targetMonster.takeDamage === 'function') {
+          if (distance <= explosionRadius + monsterRadius && typeof targetMonster.takeDamage === 'function') {
             console.log(`🎯 몬스터 피격! 거리: ${distance.toFixed(1)}, HP: ${targetMonster.hp} -> ${targetMonster.hp - (bomb.damage || 30)}`);
             targetMonster.takeDamage(bomb.damage || 30);
             hitCount++;
           }
         }
       });
+      
 
       // ✅ 보스 데미지 처리 추가!
       // this.bossGroup.getChildren().forEach(boss => {

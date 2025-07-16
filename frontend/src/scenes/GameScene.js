@@ -52,6 +52,8 @@ export default class GameScene extends Phaser.Scene {
     this.load.image('mouse_max','/assets/weapon/mouse_max.png');
     this.load.image('bomb_max','/assets/weapon/printer_max.png');
     this.load.image('typing_max','/assets/weapon/typing_max.png');
+    this.load.image('email', '/assets/boss/email.png');
+
     // this.load.html('chatForm', 'src/ui/chatForm.html'); // 이제 이 줄은 필요 없습니다.
   }
 
@@ -169,6 +171,11 @@ export default class GameScene extends Phaser.Scene {
     this.drawWeaponUI();
     this.drawUsableItemUI();
 
+
+
+    //보스투사체 & 플레이어 충돌
+    this.bossProjectiles = this.physics.add.group();
+    this.physics.add.overlap(this.player, this.bossProjectiles, this.handlePlayerHitByEmail, null, this);
 
       //충돌 박스 디버깅용
     this.physics.world.drawDebug = true;
@@ -763,4 +770,26 @@ export default class GameScene extends Phaser.Scene {
   spawnRandomMonster() {
     spawnMonster(this, this.player, this.monsters);
   }
+
+
+  // 플레이어 이메일(보스투사체) 충돌 로직
+  handlePlayerHitByEmail(player, projectile) {
+    if (player.isInvincible) return;
+
+    projectile.destroy();
+
+    console.log("📧 이메일 피격!");
+    this.remainingMinutes += 5;
+
+    player.setInvincible();
+    player.setTint(0xff9900);
+    this.time.delayedCall(1000, () => player.clearTint());
+
+    if (this.remainingMinutes >= 60) {
+      this.scene.start('GameOverScene', { reason: 'overworked' });
+    }
+  }
+
+
+
 }

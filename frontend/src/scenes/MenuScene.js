@@ -5,7 +5,7 @@ export default class MenuScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image('player', 'assets//images/Player.png');
+    this.load.image('player', 'assets/images/Player.png');
   }
 
   create() {

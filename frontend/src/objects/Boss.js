@@ -1,6 +1,9 @@
 // objects/Boss.js
 import { ExpObject } from './Exp.js';
 import Monster from './Monster.js';
+import EmailProjectile from './EmailProjectile.js'; // 상단 import
+
+
 
 export default class Boss extends Monster {
   // ✨ 1. 생성자에 health와 damage 파라미터 추가
@@ -85,6 +88,22 @@ this.scene.time.delayedCall(0, () => {
       if (this.hpBar) this.hpBar.destroy();
       if (this.hpText) this.hpText.destroy();
     });
+
+
+    //보스가 투사체 던지는 루틴 추가
+    this.projectileTimer = this.scene.time.addEvent({
+    delay: 4000,  // 4초마다 발사
+    loop: true,
+    callback: () => {
+      if (this.active && this.scene && this.player) {
+        const projectile = new EmailProjectile(this.scene, this.x, this.y, this.player, this.damage);
+        this.scene.bossProjectiles.add(projectile);
+        console.log('📧 이메일 발사!');
+      }
+    }
+  });
+
+
   }
 
   preUpdate(time, delta) {

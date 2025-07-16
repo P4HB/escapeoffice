@@ -39,6 +39,29 @@ export default class Boss extends Monster {
     this.hpBarBg.setDepth(depth);
     this.hpText.setDepth(depth);
 
+
+    //보스의 속도 변수
+    this.normalSpeed = 5;
+    this.rushSpeed = 90;
+    this.speed = this.normalSpeed;
+
+
+
+        // 💥 돌진 타이머 시작
+    this.scene.time.addEvent({
+      delay: 8000,  // 5초 평속 + 3초 돌진 = 총 8초 주기
+      loop: true,
+      callback: () => {
+        this.speed = this.rushSpeed;
+        console.log('💨 보스 돌진 시작!');
+
+        this.scene.time.delayedCall(3000, () => {
+          this.speed = this.normalSpeed;
+          console.log('🏃‍♂️ 보스 속도 복귀');
+        });
+      }
+    });
+
     // 보스가 destroy될 때 체력바 제거
     this.on('destroy', () => {
       if (this.hpBarBg) this.hpBarBg.destroy();

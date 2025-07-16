@@ -227,7 +227,7 @@ export default class GameScene extends Phaser.Scene {
       }
     });
 
-    if (!this.bossSpawned && !this.isChattingWithKim && this.player.level >= 15) {
+    if (!this.bossSpawned && !this.isChattingWithKim && this.player.level >= 2) {
       this.startBossChatSequence();
     }
   }
@@ -397,6 +397,11 @@ export default class GameScene extends Phaser.Scene {
     console.log(`👹 대화 종료! 최종 기분 점수: ${this.kimDaeRiMood}. 이 점수로 보스를 소환합니다.`);
     this.isChattingWithKim = false;
     this.input.keyboard.enabled = true;   
+
+    // 🔧 방향키 상태 초기화.  >> 대화 끝나면 갑자기 플레이어 계속 움직이는 오류
+    this.input.keyboard.clearCaptures();
+    this.input.keyboard.resetKeys();
+
     this.chatUIElements.forEach(element => element.destroy());
     
     this.chatUIElements = [];

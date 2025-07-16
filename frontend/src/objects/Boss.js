@@ -20,9 +20,26 @@ export default class Boss extends Monster {
     scene.physics.add.existing(this);
 
     this.setCollideWorldBounds(true);
-    this.setScale(0.3);
+    
 
     
+    
+    this.setScale(0.3);
+
+// 이미지 로딩이 끝나고 크기가 잡힌 후 setSize & setOffset 적용
+this.scene.time.delayedCall(0, () => {
+  const bodyWidth = this.width * 0.4;   // 원본 기준
+  const bodyHeight = this.height * 0.7;
+
+  this.body.setSize(bodyWidth, bodyHeight);
+
+  // 💡 scale된 걸 고려해 offset도 원본 기준에서 계산
+  const offsetX = (this.width - bodyWidth) / 2;
+  const offsetY = (this.height - bodyHeight) / 2;
+  this.body.setOffset(offsetX, offsetY);
+});
+    
+        
 
     // 콜라이더 설정
     // const tex = this.texture.getSourceImage();

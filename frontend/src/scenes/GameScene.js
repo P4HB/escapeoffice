@@ -169,6 +169,12 @@ export default class GameScene extends Phaser.Scene {
     this.drawWeaponUI();
     this.drawUsableItemUI();
 
+
+      //충돌 박스 디버깅용
+    this.physics.world.drawDebug = true;
+    this.physics.world.debugGraphic = this.add.graphics();
+
+
     // this.physics.add.overlap(this.player, this.boss, this.handlePlayerHit, null, this); // 'this.boss'는 존재하지 않음. 보스 그룹과 충돌처리해야함
   }
 

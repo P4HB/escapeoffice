@@ -73,7 +73,7 @@ export class RangedWeapon extends Weapon {
   }
 
   createBullet() {
-    console.log('[⚡] bulletKey 업그레이드됨:', this.bulletKey);
+    //console.log('[⚡] bulletKey 업그레이드됨:', this.bulletKey);
     const bullet = this.scene.bullets.create(this.player.x, this.player.y, this.bulletKey);
 
     if (bullet) {

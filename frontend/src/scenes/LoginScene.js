@@ -48,16 +48,16 @@ export default class LoginScene extends Phaser.Scene {
     });
 
     // 구글 시작 버튼
-    const googleBtn = this.add.text(width / 2, 300, '[🔗 구글로 시작하기]', {
-      fontSize: '20px',
-      fill: '#ffffff',
-      backgroundColor: '#db4437',
-      padding: { left: 10, right: 10, top: 5, bottom: 5 }
-    }).setOrigin(0.5).setInteractive();
+    // const googleBtn = this.add.text(width / 2, 300, '[🔗 구글로 시작하기]', {
+    //   fontSize: '20px',
+    //   fill: '#ffffff',
+    //   backgroundColor: '#db4437',
+    //   padding: { left: 10, right: 10, top: 5, bottom: 5 }
+    // }).setOrigin(0.5).setInteractive();
 
-    googleBtn.on('pointerdown', () => {
-      alert('⚠️ 구글 로그인은 나중에 연결됩니다!');
-    });
+    // googleBtn.on('pointerdown', () => {
+    //   alert('⚠️ 구글 로그인은 나중에 연결됩니다!');
+    // });
 
     // 회원가입 버튼
     const registerBtn = this.add.text(width / 2, 350, '[📝 회원가입]', {

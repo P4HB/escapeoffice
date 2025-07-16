@@ -156,13 +156,13 @@ export default class GameScene extends Phaser.Scene {
     });
 
     this.usableItemSpawnTimer = this.time.addEvent({
-        delay: 10000,
+        delay: 1000,
         loop: true,
         callback: () => { this.spawnRandomUsableItem(); }
     });
 
     this.physics.world.drawDebug = false; // 디버그는 필요할 때 true로 설정
-    this.debugGraphics = this.add.graphics();
+    // this.debugGraphics = this.add.graphics();
 
     this.physics.add.overlap(this.player, this.weapons, this.handleWeaponPickup, null, this);
     this.physics.add.overlap(this.monsters, this.bombs, this.handleBombHit, null, this);
@@ -184,8 +184,8 @@ export default class GameScene extends Phaser.Scene {
     this.physics.add.overlap(this.player, this.bossProjectiles, this.handlePlayerHitByEmail, null, this);
 
       //충돌 박스 디버깅용
-    this.physics.world.drawDebug = true;
-    this.physics.world.debugGraphic = this.add.graphics();
+    // this.physics.world.drawDebug = true;
+    // this.physics.world.debugGraphic = this.add.graphics();
 
     try {
       const res = await fetch('http://localhost:3000/api/start-game', {
@@ -200,9 +200,8 @@ export default class GameScene extends Phaser.Scene {
       this.kimPrompt = '기본 프롬프트';
       this.kimReport = '보고서 없음';
     }
-
     this.time.addEvent({
-      delay: 1000,
+      delay: 60000,
       callback: () => {
     // 💡 전체 맵 크기 기준 랜덤 위치
           const mapBounds = this.physics.world.bounds;
@@ -266,9 +265,9 @@ export default class GameScene extends Phaser.Scene {
       this.scene.start('GameOverScene', { reason: 'timeout' });
     }
     
-    if (this.physics.world.drawDebug) {
-        this.drawColliders();
-    }
+    // if (this.physics.world.drawDebug) {
+    //     this.drawColliders();
+    // }
 
     this.drawWeaponUI();
     this.drawUsableItemUI();
@@ -279,7 +278,7 @@ export default class GameScene extends Phaser.Scene {
       }
     });
 
-    if (!this.bossSpawned && !this.isChattingWithKim && this.player.level >= 2) {
+    if (!this.bossSpawned && !this.isChattingWithKim && this.player.level >= 6) {
       this.startBossChatSequence();
     }
   }

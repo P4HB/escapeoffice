@@ -34,7 +34,7 @@ const config = {
     arcade: {
       gravity: { y: 0 },
       // 💡 개발 완료 후에는 false로 바꾸는 것이 성능에 좋습니다.
-      debug: true 
+      debug: false
     }
   },
   plugins: {
@@ -43,6 +43,7 @@ const config = {
         key: 'rexOutlinePipeline',
         plugin: RexOutlinePipelinePlugin,
         start: true
+
       }
     ]
   },

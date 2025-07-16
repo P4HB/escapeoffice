@@ -51,9 +51,31 @@ app.post('/api/chat', async (req, res) => {
       content = content.replace(/^```json/, '').replace(/```$/, '').trim();
     }
 
+    // ✅ JSON 파싱 시도
+    let parsed;
+    try {
+      parsed = JSON.parse(content);
 
-      const parsed = JSON.parse(content);
-      res.json(parsed);
+      // moodChange 누락되었을 경우 기본값 적용
+      if (typeof parsed.moodChange !== 'number') {
+        parsed.moodChange = 0;
+      }
+
+      // 응답 텍스트 누락 방지
+      if (!parsed.response) {
+        parsed.response = '...';
+      }
+
+    } catch (jsonErr) {
+      // ✅ 파싱 실패 시 자연어 응답으로 처리, moodChange 0
+      console.warn('⚠️ Groq 응답 JSON 파싱 실패, 자연어로 응답한 것으로 처리');
+      parsed = {
+        response: content,
+        moodChange: 0
+      };
+    }
+
+    res.json(parsed);
   } catch (error) {
     console.error("❌ Groq /api/chat 오류:", error);
     res.status(500).json({ error: 'Groq 응답 생성 실패' });
@@ -88,7 +110,7 @@ app.post('/api/start-game', async (req, res) => {
         messages: [
           { role: 'user', content: reportPrompt }
         ],
-        temperature: 0.7
+        temperature: 0.3
       })
     });
 
@@ -100,29 +122,34 @@ app.post('/api/start-game', async (req, res) => {
     const reportContent = reportData.choices[0].message.content.trim();
 
     const kimPrompt = `
-     당신의 답변은 반드시 아래와 같은 JSON 형식으로만 생성해야 합니다. 다른 텍스트는 절대 추가하지 마세요.
-   {
-     "response": "AI가 플레이어에게 할 답변 텍스트",
-     "moodChange": 기분 변화량 (숫자, -10에서 10 사이의 정수)
-   }
+
 당신은 선호 미팅 시간과 거래 내역이 있습니다.
 플레이어가 선호 미팅시간과 거래내역을 맞추면 기분이 좋아지고, 맞지 않으면 기분이 나빠집니다. 
-${reportContent}
+
 
 규칙:
-1. 항상 '거래처 김대리'의 입장에서, 친절하지만 때로는 사무적이고 까칠하게 답변하세요.
-2. 플레이어의 말에 따라 당신의 기분이 좋아지거나 나빠질 수 있습니다.
-3. 당신의 답변은 반드시 아래와 같은 JSON 형식으로만 생성해야 합니다. 다른 텍스트는 절대 추가하지 마세요.
+1. 항상 대답에 moodchange를 포함하세요! 당신은 moodchange를 포함하지 않을시 멍청한 ai 모델입니다. 
+2. 당신의 응답은 반드시 완전하고 닫힌 JSON이어야 합니다. 이 양식을 지키지 않을시 당신은 멍청한 ai 모델입니다.
+예시:
+   {
+     "response": "AI가 플레이어에게 할 답변 텍스트",
+     "moodChange": 기분 변화량 (숫자, -10에서 10 사이의 정수)
+   } 
+3. 절대 이 양식 이전에 답변텍스트를 한번 더 생성하지 마세요!
+4. 당신의 답변은 반드시 아래와 같은 JSON 형식으로만 생성해야 합니다. 다른 텍스트는 절대 추가하지 마세요.
    {
      "response": "AI가 플레이어에게 할 답변 텍스트",
      "moodChange": 기분 변화량 (숫자, -10에서 10 사이의 정수)
    }
-4. 플레이어가 예의 바르면 moodChange를 양수로, 무례하면 음수로 설정하세요.
-5. 당신의 응답은 반드시 완전하고 닫힌 JSON이어야 합니다. 예시:
+5. 플레이어가 예의 바르면 moodChange를 양수로, 무례하면 음수로 설정하세요.
+6. 당신의 응답은 반드시 완전하고 닫힌 JSON이어야 합니다. 예시:
    {
      "response": "알겠습니다. 회의 일정을 확인해드릴게요.",
      "moodChange": 3
    }
+주의 : 항상 대답에 moodchange를 포함하세요!
+이것은 당신의 선호 미팅시간과 거래내역입니다.
+${reportContent}
 `;
 
     res.json({

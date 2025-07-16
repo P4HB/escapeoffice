@@ -54,8 +54,8 @@ export default class GameScene extends Phaser.Scene {
     this.load.image('typing_max','/assets/weapon/typing_max.png');
     this.load.image('email', '/assets/boss/email.png');
 
-    this.load.image('report','/src/assets/usableitem/report.png');
-    this.load.image('showreport','/src/assets/images/showreport.png');
+    this.load.image('report','/assets/usableitem/report.png');
+    this.load.image('showreport','/assets/images/showreport.png');
     // this.load.html('chatForm', 'src/ui/chatForm.html'); // 이제 이 줄은 필요 없습니다.
   }
 

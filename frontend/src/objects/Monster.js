@@ -88,6 +88,7 @@ export default class Monster extends Phaser.Physics.Arcade.Sprite {
     } else if (this.isStunned) {
       // 멈춘 상태에서는 속도를 0으로 유지
       this.body.setVelocity(0, 0);
+      // this.setTint(0x3399ff);
     }
     // HP 바 위치/길이/텍스트 갱신
     const barWidth = this.body.width * this.scaleX * 5; // 훨씬 더 넓게
@@ -116,7 +117,12 @@ export default class Monster extends Phaser.Physics.Arcade.Sprite {
     this.lastHitTime = currentTime;
     this.setTint(0xff0000);
     this.scene.time.delayedCall(200, () => {
-      this.clearTint(); // 1초 후 원래 색으로 복귀
+      if(this.isStunned){
+        this.setTint(0x4444ff);
+      }
+      else{
+        this.clearTint(); // 1초 후 원래 색으로 복귀
+      }
     });
     this.hp -= amount;
     if (this.hp <= 0) {

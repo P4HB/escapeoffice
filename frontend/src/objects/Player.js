@@ -91,13 +91,14 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
   // 레벨업
   levelUp() {
-    if(this.level >=22 ){
-      return;
-    }
+
     this.level += 1;
     // 무기 업그레이드 모달 띄우기
-    if (this.scene && typeof this.scene.showWeaponUpgradeModal === 'function') {
-      this.scene.showWeaponUpgradeModal();
+    const allWeaponsMaxed = Object.values(this.obtainedWeapons).length >=3 &&Object.values(this.obtainedWeapons).every(weapon => weapon.level >= 7);
+    if(!allWeaponsMaxed){
+      if (this.scene && typeof this.scene.showWeaponUpgradeModal === 'function' && !allWeaponsMaxed) {
+        this.scene.showWeaponUpgradeModal();
+      }
     }
   }
 

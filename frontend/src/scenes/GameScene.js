@@ -201,12 +201,14 @@ export default class GameScene extends Phaser.Scene {
     const hour = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
     this.statusText.setText(`퇴근 시간: 오후 ${hour}시 ${minutes.toString().padStart(2, '0')}분`);
+    this.statusText.setDepth(1000);
 
     const elapsedTime = (this.time.now - this.startTime) / 1000;
     const remainingTime = Math.max(0, this.gameTime - elapsedTime);
     const timerMinutes = Math.floor(remainingTime / 60);
     const timerSeconds = Math.floor(remainingTime % 60);
     this.timerText.setText(`남은 시간: ${timerMinutes}:${timerSeconds.toString().padStart(2, '0')}`);
+    this.timerText.setDepth(1000);
 
     if (remainingTime <= 0) {
       this.scene.start('GameOverScene', { reason: 'timeout' });

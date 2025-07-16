@@ -20,9 +20,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.setOrigin(0.5, 0.5); // 중앙 정렬
     this.setScale(0.08); // 원하는 스케일
 
-    // 콜라이더를 원본 이미지 테두리에 맞춤
-    this.body.setSize(864, 858);
-    this.body.setOffset(50, 80);
+    this.body.setSize(432, 429);     // 원래 크기의 절반 정도
+    this.body.setOffset(216, 215);   // 이미지 중앙 정렬을 위한 offset 조정
     
     this.setCollideWorldBounds(true)
     // 플레이어가 획득한 무기 목록 (key: 무기이름, value: 무기 인스턴스)

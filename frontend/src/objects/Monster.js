@@ -66,7 +66,7 @@ export default class Monster extends Phaser.Physics.Arcade.Sprite {
     this.hpText = scene.add.text(0, 0, '', {
       fontSize: '10px', fill: '#fff', fontFamily: 'Arial', stroke: '#222', strokeThickness: 2
     }).setOrigin(0.5, 1);
-    this.hpBarDepth = 1000;
+    this.hpBarDepth = 500;
     this.hpBarBg.setDepth(this.hpBarDepth);
     this.hpBar.setDepth(this.hpBarDepth);
     this.hpText.setDepth(this.hpBarDepth);

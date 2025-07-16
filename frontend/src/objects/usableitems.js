@@ -183,3 +183,18 @@ export class DroppedUsableItem extends Phaser.Physics.Arcade.Sprite {
     this.y = this.baseY + bobOffset;
   }
 }
+
+export class DroppedReportItem extends Phaser.Physics.Arcade.Sprite {
+  constructor(scene, x, y, reportText) {
+    super(scene, x, y, 'report');
+    scene.add.existing(this);
+    scene.physics.add.existing(this);
+
+    this.setScale(0.05);
+    this.setDepth(10);
+    this.reportText = reportText;
+    this.body.setAllowGravity(false);
+  }
+}
+
+

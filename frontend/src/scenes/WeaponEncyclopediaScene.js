@@ -4,16 +4,16 @@ export default class WeaponEncyclopediaScene extends Phaser.Scene {
     }
   
     preload() {
-      this.load.image('coffee', '/src/assets/weapon/coffee.png');
-      this.load.image('usb', '/src/assets/weapon/usb.png');
-      this.load.image('bomb', '/src/assets/weapon/printer.png');
-      this.load.image('mouse', '/src/assets/weapon/mouse.png');
-      this.load.image('typing', '/src/assets/weapon/typing.png');
-      this.load.image('coffee_max', '/src/assets/weapon/coffee_max.png');
-      this.load.image('usb_max', '/src/assets/weapon/usb_max.png');
-      this.load.image('bomb_max', '/src/assets/weapon/printer_max.png');
-      this.load.image('mouse_max', '/src/assets/weapon/mouse_max.png');
-      this.load.image('typing_max', '/src/assets/weapon/typing_max.png');
+      this.load.image('coffee', '/assets/weapon/coffee.png');
+      this.load.image('usb', '/assets/weapon/usb.png');
+      this.load.image('bomb', '/assets/weapon/printer.png');
+      this.load.image('mouse', '/assets/weapon/mouse.png');
+      this.load.image('typing', '/assets/weapon/typing.png');
+      this.load.image('coffee_max', '/assets/weapon/coffee_max.png');
+      this.load.image('usb_max', '/assets/weapon/usb_max.png');
+      this.load.image('bomb_max', '/assets/weapon/printer_max.png');
+      this.load.image('mouse_max', '/assets/weapon/mouse_max.png');
+      this.load.image('typing_max', '/assets/weapon/typing_max.png');
     }
   
     create() {

@@ -31,27 +31,27 @@ export default class GameScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image('boojang', '/src/assets/monster/boojang.png');
-    this.load.image('gwajang', '/src/assets/monster/gwajang.png');
-    this.load.image('file', '/src/assets/monster/file.png');
-    this.load.image('bogoseo', '/src/assets/monster/bogoseo.png');
-    this.load.image('usb','/src/assets/weapon/usb.png');
-    this.load.image('coffee','/src/assets/weapon/coffee.png');
-    this.load.image('mouse','/src/assets/weapon/mouse.png');
-    this.load.image('bomb','/src/assets/weapon/printer.png');
-    this.load.image('typing','/src/assets/weapon/typing.png');
-    this.load.image('skill','/src/assets/usableitem/skill.png');
-    this.load.image('player', 'src/assets/images/Player.png');
-    this.load.image('map', '/src/assets/map/map.png');
-    this.load.image('map2', '/src/assets/map/map2.png');
-    this.load.image('map3','/src/assets/map/map3.png');
-    this.load.image('exp', 'src/assets/images/exp.png');
-    this.load.image('boss', '/src/assets/boss/boss.png');
-    this.load.image('coffee_max','/src/assets/weapon/coffee_max.png');
-    this.load.image('usb_max','/src/assets/weapon/usb_max.png');
-    this.load.image('mouse_max','/src/assets/weapon/mouse_max.png');
-    this.load.image('bomb_max','/src/assets/weapon/printer_max.png');
-    this.load.image('typing_max','/src/assets/weapon/typing_max.png');
+    this.load.image('boojang', '/assets/monster/boojang.png');
+    this.load.image('gwajang', '/assets/monster/gwajang.png');
+    this.load.image('file', '/assets/monster/file.png');
+    this.load.image('bogoseo', '/assets/monster/bogoseo.png');
+    this.load.image('usb','/assets/weapon/usb.png');
+    this.load.image('coffee','/assets/weapon/coffee.png');
+    this.load.image('mouse','/assets/weapon/mouse.png');
+    this.load.image('bomb','/assets/weapon/printer.png');
+    this.load.image('typing','/assets/weapon/typing.png');
+    this.load.image('skill','/assets/usableitem/skill.png');
+    this.load.image('player', 'assets//images/Player.png');
+    this.load.image('map', '/assets/map/map.png');
+    this.load.image('map2', '/assets/map/map2.png');
+    this.load.image('map3','/assets/map/map3.png');
+    this.load.image('exp', 'assets//images/exp.png');
+    this.load.image('boss', '/assets/boss/boss.png');
+    this.load.image('coffee_max','/assets/weapon/coffee_max.png');
+    this.load.image('usb_max','/assets/weapon/usb_max.png');
+    this.load.image('mouse_max','/assets/weapon/mouse_max.png');
+    this.load.image('bomb_max','/assets/weapon/printer_max.png');
+    this.load.image('typing_max','/assets/weapon/typing_max.png');
     // this.load.html('chatForm', 'src/ui/chatForm.html'); // 이제 이 줄은 필요 없습니다.
   }
 

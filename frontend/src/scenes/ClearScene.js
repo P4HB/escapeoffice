@@ -1,4 +1,6 @@
 // ClearScene.js
+import { GUEST_MODE } from '../services/gameMode.js';
+import { saveGuestRecord } from '../services/guestGame.js';
 export default class ClearScene extends Phaser.Scene {
   constructor() {
     super({ key: 'ClearScene' });
@@ -32,6 +34,12 @@ export default class ClearScene extends Phaser.Scene {
     console.log('서버로 보내는 점수:', totalTime);
 
 
+    if (GUEST_MODE) {
+      const saved = saveGuestRecord(totalTime);
+      this.add.text(width / 2, height / 2 + 65,
+        saved ? '이 브라우저에 기록을 저장했습니다. 메뉴의 내 기록에서 확인하세요.' : '기록을 저장할 수 없습니다. 브라우저 저장 공간 설정을 확인해주세요.',
+        { fontSize: '16px', fill: '#cccccc' }).setOrigin(0.5);
+    } else {
   // ✅ 점수 서버로 전송
       fetch('/api/score', {
       method: 'POST',
@@ -44,7 +52,7 @@ export default class ClearScene extends Phaser.Scene {
     .then(res => res.json())
     .then(data => console.log('✅ 점수 저장 완료:', data))
     .catch(err => console.error('❌ 점수 저장 실패:', err));
-
+    }
 
 
 

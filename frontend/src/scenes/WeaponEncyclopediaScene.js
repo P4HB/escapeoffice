@@ -1,14 +1,15 @@
+import { assetUrl } from '../services/gameMode.js';
 export default class WeaponEncyclopediaScene extends Phaser.Scene {
     constructor() {
       super({ key: 'WeaponEncyclopediaScene' });
     }
   
     preload() {
-      this.load.image('coffee', '/assets/weapon/coffee.png');
-      this.load.image('usb', '/assets/weapon/usb.png');
-      this.load.image('bomb', '/assets/weapon/printer.png');
-      this.load.image('mouse', '/assets/weapon/mouse.png');
-      this.load.image('typing', '/assets/weapon/typing.png');
+      this.load.image('coffee', assetUrl('assets/weapon/coffee.png'));
+      this.load.image('usb', assetUrl('assets/weapon/usb.png'));
+      this.load.image('bomb', assetUrl('assets/weapon/printer.png'));
+      this.load.image('mouse', assetUrl('assets/weapon/mouse.png'));
+      this.load.image('typing', assetUrl('assets/weapon/typing.png'));
     }
   
     create() {

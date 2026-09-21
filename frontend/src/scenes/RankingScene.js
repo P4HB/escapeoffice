@@ -1,4 +1,6 @@
 // @ts-nocheck
+import { GUEST_MODE } from '../services/gameMode.js';
+import { loadGuestRecords } from '../services/guestGame.js';
 export default class RankingScene extends Phaser.Scene {
   constructor() {
     super({ key: 'RankingScene' });
@@ -9,22 +11,34 @@ export default class RankingScene extends Phaser.Scene {
 
     this.cameras.main.setBackgroundColor('#1c1c1c');
 
-    this.add.text(width / 2, 50, '🏆 랭킹 TOP 10 🏆', {
+    this.add.text(width / 2, 50, GUEST_MODE ? '🏆 내 기록 TOP 10 🏆' : '🏆 랭킹 TOP 10 🏆', {
       fontSize: '32px',
       fill: '#ffffff',
       fontFamily: 'Arial Black',
     }).setOrigin(0.5);
 
     // 🧠 랭킹 데이터를 서버에서 불러오기
-    fetch('/api/ranking')
-      .then(res => res.json())
+    const records = GUEST_MODE
+      ? Promise.resolve(loadGuestRecords().map(record => ({ ...record, nickname: '게스트' })))
+      : fetch('/api/ranking').then(res => res.json());
+    if (GUEST_MODE) {
+      this.add.text(width / 2, 85, '이 브라우저에 저장된 클리어 기록 · 빠른 순서', {
+        fontSize: '16px', fill: '#aaaaaa',
+      }).setOrigin(0.5);
+    }
+    records
       .then(ranking => {
         if (!Array.isArray(ranking)) {
           throw new Error('랭킹 데이터가 배열이 아님');
         }
+        if (ranking.length === 0) {
+          this.add.text(width / 2, 200, '아직 클리어 기록이 없습니다. 첫 퇴근에 도전하세요!', {
+            fontSize: '20px', fill: '#ffffff',
+          }).setOrigin(0.5);
+        }
 
         // ✨ 순위별로 출력
-        ranking.forEach((entry, index) => {
+        ranking.slice(0, 10).forEach((entry, index) => {
           const rankY = 120 + index * 30;
           const nickname = entry.nickname || entry.user_id || '익명';
           const score = entry.score?.toFixed(2) || '-';

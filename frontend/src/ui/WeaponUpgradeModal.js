@@ -171,8 +171,10 @@ export default class WeaponUpgradeModal {
 
 
   upgradeWeapon(weaponKey) {
+    if (!this.isActive || this.isUpgrading) return;
     const weapon = this.player.obtainedWeapons[weaponKey];
-    if (weapon) {
+    if (weapon && weapon.level < 6) {
+      this.isUpgrading = true;
       // 무기 업그레이드 적용
       weapon.upgrade();
       
@@ -244,4 +246,4 @@ export default class WeaponUpgradeModal {
       this.onComplete();
     }
   }
-} 
+}

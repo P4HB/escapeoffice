@@ -8,6 +8,8 @@ import { DroppedUsableItem, Skill } from '../objects/usableitems.js';
 import WeaponSwapModal from '../ui/WeaponSwapModal.js';
 import WeaponUpgradeModal from '../ui/WeaponUpgradeModal.js';
 import Boss from '../objects/Boss.js';
+import { GUEST_MODE, assetUrl } from '../services/gameMode.js';
+import { getGuestReply } from '../services/guestGame.js';
 
 
 const WEAPON_IMAGE_KEYS = ['coffee', 'usb', 'mouse', 'bomb', 'typing'];
@@ -31,22 +33,22 @@ export default class GameScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image('boojang', '/assets/monster/boojang.png');
-    this.load.image('gwajang', '/assets/monster/gwajang.png');
-    this.load.image('file', '/assets/monster/file.png');
-    this.load.image('bogoseo', '/assets/monster/bogoseo.png');
-    this.load.image('usb','/assets/weapon/usb.png');
-    this.load.image('coffee','/assets/weapon/coffee.png');
-    this.load.image('mouse','/assets/weapon/mouse.png');
-    this.load.image('bomb','/assets/weapon/printer.png');
-    this.load.image('typing','/assets/weapon/typing.png');
-    this.load.image('skill','/assets/usableitem/skill.png');
-    this.load.image('player', '/assets/images/Player.png');
-    this.load.image('map', '/assets/map/map.png');
-    this.load.image('map2', '/assets/map/map2.png');
-    this.load.image('map3','/assets/map/map3.png');
-    this.load.image('exp', '/assets/images/exp.png');
-    this.load.image('boss', '/assets/boss/boss.png');
+    this.load.image('boojang', assetUrl('assets/monster/boojang.png'));
+    this.load.image('gwajang', assetUrl('assets/monster/gwajang.png'));
+    this.load.image('file', assetUrl('assets/monster/file.png'));
+    this.load.image('bogoseo', assetUrl('assets/monster/bogoseo.png'));
+    this.load.image('usb',assetUrl('assets/weapon/usb.png'));
+    this.load.image('coffee',assetUrl('assets/weapon/coffee.png'));
+    this.load.image('mouse',assetUrl('assets/weapon/mouse.png'));
+    this.load.image('bomb',assetUrl('assets/weapon/printer.png'));
+    this.load.image('typing',assetUrl('assets/weapon/typing.png'));
+    this.load.image('skill',assetUrl('assets/usableitem/skill.png'));
+    this.load.image('player', assetUrl('assets/images/Player.png'));
+    this.load.image('map', assetUrl('assets/map/map.png'));
+    this.load.image('map2', assetUrl('assets/map/map2.png'));
+    this.load.image('map3',assetUrl('assets/map/map3.png'));
+    this.load.image('exp', assetUrl('assets/images/exp.png'));
+    this.load.image('boss', assetUrl('assets/boss/boss.png'));
     // this.load.html('chatForm', 'src/ui/chatForm.html'); // 이제 이 줄은 필요 없습니다.
   }
 
@@ -69,6 +71,14 @@ export default class GameScene extends Phaser.Scene {
     this.kimDaeRiMood = 0;
     this.chatUIElements = [];
     this.chatFormComponent = null; // 채팅 폼 참조도 null로 초기화
+    this.chatCount = 0;
+    this.chatRequestPending = false;
+    this.events.once('shutdown', () => {
+      this.input.keyboard.enabled = true;
+      this.input.keyboard.enableGlobalCapture();
+      this.chatFormComponent = null;
+      this.chatUIElements = [];
+    });
 
     this.bullets = this.physics.add.group();
     this.weapons = this.physics.add.group();
@@ -176,6 +186,7 @@ export default class GameScene extends Phaser.Scene {
 
     if (remainingTime <= 0) {
       this.scene.start('GameOverScene', { reason: 'timeout' });
+      return;
     }
     
     if (this.physics.world.drawDebug) {
@@ -191,13 +202,17 @@ export default class GameScene extends Phaser.Scene {
       }
     });
 
-    if (!this.bossSpawned && !this.isChattingWithKim && this.player.level >= 2) {
+    if (!this.bossSpawned && !this.isChattingWithKim && this.player.level >= 15) {
       this.startBossChatSequence();
     }
   }
 
   startBossChatSequence() {
+    if (this.isChattingWithKim || this.bossSpawned) return;
     this.isChattingWithKim = true;
+    this.chatStartedAt = this.time.now;
+    this.input.keyboard.enabled = false;
+    this.input.keyboard.disableGlobalCapture();
     console.log("🤖 거래처 김대리와의 대화를 시작합니다...");
 
     this.physics.world.pause();
@@ -216,27 +231,19 @@ export default class GameScene extends Phaser.Scene {
     // ✅ 3. 코드로 직접 HTML 생성
     const chatHTML = `
       <div id="chat-form">
+        <div id="chat-heading">
+          <img src="${assetUrl('daeri.png')}" alt="거래처 김대리">
+          <span>거래처 김대리${GUEST_MODE ? ' · 기본 대화' : ''}</span>
+          <button name="leaveButton">보스 만나기</button>
+        </div>
         <div id="chatLog"></div>
         <div id="input-container">
-          <input type="text" name="playerInput" placeholder="할 말을 입력하세요...">
+          <input type="text" name="playerInput" maxlength="500" aria-label="김대리에게 할 말" placeholder="할 말을 입력하세요...">
           <button name="sendButton">전송</button>
         </div>
       </div>
-    `;12
+    `;
     const chatForm = this.add.dom(centerX, centerY).createFromHTML(chatHTML);
-    
-    const kimImg = document.createElement("img");
-    kimImg.src = "/public/daeri.png";
-    kimImg.id = "daeri-img";
-    kimImg.style.position = "absolute";
-    kimImg.style.top = "80px";
-    kimImg.style.left = "50%";
-    kimImg.style.transform = "translateX(-50%)";
-    kimImg.style.width = "180px";
-    kimImg.style.borderRadius = "10px";
-    kimImg.style.zIndex = "999";
-    console.log("김대리 이미지 추가!");
-    document.body.appendChild(kimImg);
 
     chatForm.setScrollFactor(0);
     
@@ -247,6 +254,10 @@ export default class GameScene extends Phaser.Scene {
     chatForm.setPerspective(800);
     chatForm.addListener('click');
     chatForm.on('click', (event) => {
+      if (event.target.name === 'leaveButton') {
+        this.endChatAndSpawnBoss();
+        return;
+      }
       if (event.target.name === 'sendButton') {
         const inputText = chatForm.getChildByName('playerInput');
         if (inputText.value !== '') {
@@ -257,9 +268,17 @@ export default class GameScene extends Phaser.Scene {
     });
     
     this.appendMessageToLog("플레이어: (거래처 사장님을 만나기 전, 김대리에게 말을 건다...)");
+    this.appendMessageToLog('김대리: 안녕하세요. 준비되시면 “가볼게요”라고 말하거나 보스 만나기를 눌러주세요.');
 
     const inputField = chatForm.getChildByName('playerInput');
     if (inputField) {
+      inputField.addEventListener('keydown', event => {
+        if (event.key === 'Enter' && !event.isComposing && inputField.value.trim()) {
+          event.preventDefault();
+          this.handlePlayerMessage(inputField.value);
+          inputField.value = '';
+        }
+      });
       inputField.focus();
     }
   }
@@ -270,7 +289,9 @@ export default class GameScene extends Phaser.Scene {
       const chatLog = this.chatFormComponent.getChildByID('chatLog');
       
       if (chatLog) {
-        chatLog.innerHTML += `<p>${text}</p>`;
+        const line = document.createElement('p');
+        line.textContent = text;
+        chatLog.appendChild(line);
         chatLog.scrollTop = chatLog.scrollHeight;
       } else {
         console.error("오류: 'chat-form'은 찾았으나, 내부의 'chatLog'를 찾지 못했습니다.");
@@ -281,6 +302,8 @@ export default class GameScene extends Phaser.Scene {
   }
 
   async handlePlayerMessage(message) {
+    message = message.trim().slice(0, 500);
+    if (!message || !this.isChattingWithKim || this.chatRequestPending) return;
     this.appendMessageToLog(`나: ${message}`);
     this.chatCount++;
     if (message.includes("가볼게요") || message.includes("가보겠습니다") || message.includes("그만")) {
@@ -296,7 +319,12 @@ export default class GameScene extends Phaser.Scene {
     }
 
     try {
-      const response = await fetch('http://localhost:3000/api/chat', {
+      this.chatRequestPending = true;
+      let data;
+      if (GUEST_MODE) {
+        data = getGuestReply(message);
+      } else {
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -311,7 +339,9 @@ export default class GameScene extends Phaser.Scene {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      const data = await response.json();
+      data = await response.json();
+      }
+      if (!this.isChattingWithKim) return;
 
       this.kimDaeRiMood += data.moodChange;
       this.chatHistory.push({ role: 'user', content: message });
@@ -323,23 +353,27 @@ export default class GameScene extends Phaser.Scene {
 
     } catch (error) {
       console.error("채팅 서버 통신 오류:", error);
-      this.appendMessageToLog("[시스템] 서버와 통신 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+      if (this.isChattingWithKim) this.appendMessageToLog("[시스템] 대화를 불러오지 못했습니다. 보스 만나기를 눌러 진행할 수 있습니다.");
+    } finally {
+      this.chatRequestPending = false;
     }
   }
 
   // ✅ 6. 직접 참조를 초기화하는 endChatAndSpawnBoss 함수
   endChatAndSpawnBoss() {
+    if (!this.isChattingWithKim) return;
     console.log(`👹 대화 종료! 최종 기분 점수: ${this.kimDaeRiMood}. 이 점수로 보스를 소환합니다.`);
     this.isChattingWithKim = false;
+    this.startTime += this.time.now - this.chatStartedAt;
+    this.input.keyboard.enabled = true;
+    this.input.keyboard.enableGlobalCapture();
+    this.input.keyboard.resetKeys();
 
     this.chatUIElements.forEach(element => element.destroy());
     
     this.chatUIElements = [];
     this.chatFormComponent = null; // 참조 초기화
     
-    const kimImg = document.getElementById("daeri-img");
-    if (kimImg) kimImg.remove();
-
     this.physics.world.resume();
     this.monsterSpawnTimer1.paused = false;
     this.monsterSpawnTimer2.paused = false;
@@ -530,7 +564,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   useUsableItem(index) {
-    if (this.isPausedForWeaponSwap || this.isPausedForWeaponUpgrade) return;
+    if (this.isPausedForWeaponSwap || this.isPausedForWeaponUpgrade || this.isChattingWithKim) return;
     
     if (this.playerUsableItems[index] && this.playerUsableItems[index].use) {
       const success = this.playerUsableItems[index].use();
@@ -657,6 +691,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   showWeaponUpgradeModal() {
+    if (Object.values(this.player.obtainedWeapons).every(weapon => weapon.level >= 6)) return;
     this.isPausedForWeaponUpgrade = true;
     this.time.paused = true;
     this.physics.world.pause();

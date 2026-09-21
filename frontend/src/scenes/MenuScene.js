@@ -1,16 +1,17 @@
 // @ts-nocheck
+import { GUEST_MODE, assetUrl } from '../services/gameMode.js';
 export default class MenuScene extends Phaser.Scene {
   constructor() {
     super({ key: 'MenuScene' });
   }
 
   preload() {
-    this.load.image('player', '/assets/images/Player.png');
+    this.load.image('player', assetUrl('assets/images/Player.png'));
   }
 
   create() {
     const { width, height } = this.scale; // ✅ 이 줄 추가!
-    const realHeight = window.innerHeight; // 실제 브라우저 높이 기준
+    const realHeight = height;
 
     this.cameras.main.setBackgroundColor('#2e2e2e');
 
@@ -28,6 +29,15 @@ export default class MenuScene extends Phaser.Scene {
       strokeThickness: 6,
     }).setOrigin(0.5);
 
+    this.add.text(width / 2, titleY + 55, 'PC 키보드로 플레이 · 방향키 이동 · 자동 공격 · 스페이스바 아이템', {
+      fontSize: '16px', fill: '#dddddd',
+    }).setOrigin(0.5);
+    if (GUEST_MODE) {
+      this.add.text(width / 2, titleY + 82, '게스트판 · 기록은 이 브라우저에 저장됩니다', {
+        fontSize: '15px', fill: '#f0db4f',
+      }).setOrigin(0.5);
+    }
+
     // 캐릭터 이미지
     this.add.image(width / 2, playerY, 'player')
       .setScale(0.3)
@@ -38,7 +48,8 @@ export default class MenuScene extends Phaser.Scene {
       fontSize: '22px',
       fill: '#ffffff',
       fontStyle: 'italic'
-    }).setOrigin(0.5);
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    instruction.on('pointerdown', () => this.scene.start('GameScene'));
 
     // 텍스트 깜빡임 애니메이션
     this.tweens.add({
@@ -69,11 +80,11 @@ export default class MenuScene extends Phaser.Scene {
         scene: 'HowToPlayScene'
       },
       {
-        label: '[🏆 랭킹 보기]',
+        label: GUEST_MODE ? '[🏆 내 기록]' : '[🏆 랭킹 보기]',
         color: '#00ffff',
         scene: 'RankingScene'
       },
-      {
+      ...(!GUEST_MODE ? [{
         label: '[🚪 로그아웃]',
         color: '#ff5555',
         onClick: () => {
@@ -81,7 +92,7 @@ export default class MenuScene extends Phaser.Scene {
           alert('로그아웃 되었습니다!');
           this.scene.start('LoginScene');
         }
-      }
+      }] : [])
     ];
 
     const menuY = height / 2 + 180; // 버튼들의 Y 위치 (캐릭터 아래쪽)

@@ -1,4 +1,27 @@
 # 탈출 오피스
+
+## 웹 공개판
+
+- 플레이 주소: https://p4hb.github.io/escapeoffice/
+- PC 브라우저와 키보드로 플레이합니다. 방향키로 이동하며 자동으로 공격합니다.
+- 로그인 없이 시작하는 게스트판입니다. 클리어 시간 상위 10개는 현재 브라우저에만 저장됩니다.
+- 김대리는 서버 없이 동작하는 기본 대화를 사용합니다. `가볼게요` 또는 **보스 만나기**로 보스전에 진입합니다.
+- 온라인 계정·전체 랭킹·AI 대화는 공개 게스트판에 포함되지 않습니다.
+
+### 실행 및 배포
+
+Node.js 22.12 이상에서 `frontend` 폴더의 `npm ci`, `npm run dev`로 실행합니다.
+`npm test`로 게스트 기록과 대화 로직을 검증하고, `npm run build`로 `frontend/dist`를 생성합니다.
+
+GitHub Pages의 배포 소스는 **GitHub Actions**입니다. `main`의 프론트엔드 변경을 푸시하면
+`.github/workflows/deploy-pages.yml`이 테스트·빌드·배포합니다. Pages 설정의 하위 경로를
+빌드에 반영하므로 게임 이미지도 `/escapeoffice/`에서 불러옵니다.
+
+로컬에서 배포 경로를 재현하려면 `VITE_BASE_PATH=/escapeoffice/ npm run build` 후
+`VITE_BASE_PATH=/escapeoffice/ npm run preview`를 실행합니다. 기본 게스트 모드는 서버나 API 키가 필요하지 않습니다.
+기존 계정 UI는 `VITE_GUEST_MODE=false`로 빌드할 때만 활성화됩니다. 이 경우 계정 API와
+`/api/chat`을 같은 도메인에서 별도로 서비스해야 하며, 기존 백엔드는 이번 Pages 배포에 포함되지 않습니다.
+
 https://www.notion.so/24793351a63b809a83c0d96cc8bf8786?source=copy_link
 
 ## 게임소개

@@ -1,10 +1,11 @@
+import { assetUrl } from '../services/gameMode.js';
 export default class GameOverScene extends Phaser.Scene {
   constructor() {
     super({ key: 'GameOverScene' });
   }
 
   preload() {
-    this.load.image('player', '/assets/images/Player.png');
+    this.load.image('player', assetUrl('assets/images/Player.png'));
   }
 
   create(data) {

@@ -1,4 +1,6 @@
-const RECORDS_KEY = 'escapeoffice.guest.records.v1';
+import { GAME, RULES_VERSION } from '../config/balance.js';
+// Keep demonstration-era records intact under their old key.
+const RECORDS_KEY = `escapeoffice.guest.records.v${RULES_VERSION}`;
 
 export function loadGuestRecords(storage) {
   try {
@@ -7,7 +9,8 @@ export function loadGuestRecords(storage) {
     if (!Array.isArray(records)) return [];
     return records
       .filter(record => record && Number.isFinite(record.score) && record.score > 0
-        && typeof record.playedAt === 'string')
+        && record.score <= GAME.durationSeconds && typeof record.playedAt === 'string'
+        && Number.isFinite(Date.parse(record.playedAt)))
       .sort((a, b) => a.score - b.score)
       .slice(0, 10);
   } catch {
@@ -16,7 +19,7 @@ export function loadGuestRecords(storage) {
 }
 
 export function saveGuestRecord(score, storage) {
-  if (!Number.isFinite(score) || score <= 0) return false;
+  if (!Number.isFinite(score) || score <= 0 || score > GAME.durationSeconds) return false;
   try {
     storage ??= globalThis.localStorage;
     const records = [...loadGuestRecords(storage), { score, playedAt: new Date().toISOString() }]

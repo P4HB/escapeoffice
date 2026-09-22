@@ -1,55 +1,84 @@
-# 📍 백엔드 Flask 서버의 메인 파일
-
-from flask import Flask
-from flask_cors import CORS  # ✅ CORS 임포트
-
-
-# 클라우드 용 프론트 서빙
-
-from flask import send_from_directory
 import os
+import secrets
+from datetime import timedelta
+from pathlib import Path
 
-# 우리가 만든 DB 테이블 모델과 라우트 등록 코드
-from models.user_model import Base
-from db_config import engine
-from routes.user_routes import user_bp
+import click
+from dotenv import load_dotenv
+from flask import Flask, g, jsonify, request, session
+from sqlalchemy.exc import SQLAlchemyError
+from werkzeug.exceptions import HTTPException
 
-dist_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../frontend/dist'))
-app = Flask(__name__, static_folder=dist_dir, static_url_path='')
+from backend.db_config import init_database
+from backend.routes.user_routes import user_bp
+from backend.routes.chat_routes import chat_bp
 
-# 🔐 보안 고려한 최소 허용 CORS
-CORS(app,
-     resources={r"/*": {"origins": ["http://172.20.12.200"]}},
-     supports_credentials=True)
-
-
-# ✅ 서버 실행할 때 DB 테이블 자동 생성
-Base.metadata.create_all(bind=engine)
-
-# ✅ 유저 관련 API들 등록
-app.register_blueprint(user_bp, url_prefix='/api')
-
-@app.route('/')
-# def home():
-#   return '✅ 서버 + DB 연결 성공!'
-def serve_index():
-    return send_from_directory(app.static_folder, 'index.html')
+load_dotenv(Path(__file__).with_name(".env"))
 
 
-@app.route('/<path:path>')
-def serve_static(path):
-    return send_from_directory(app.static_folder, path)
+def create_app(config=None):
+    dist = Path(__file__).resolve().parent.parent / "frontend" / "dist"
+    app = Flask(__name__, static_folder=str(dist), static_url_path="")
+    app.config.from_mapping(
+        SECRET_KEY=os.environ.get("FLASK_SECRET_KEY"),
+        DATABASE_URL=os.environ.get("DATABASE_URL", "sqlite:///" + str(Path(__file__).with_name("escapeoffice.db"))),
+        SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SAMESITE="Lax",
+        SESSION_COOKIE_SECURE=os.environ.get("SESSION_COOKIE_SECURE", "true").lower() == "true",
+        PERMANENT_SESSION_LIFETIME=timedelta(hours=12),
+        MAX_CONTENT_LENGTH=32768,
+        GEMINI_API_KEY=os.environ.get("GEMINI_API_KEY"),
+        GEMINI_MODEL=os.environ.get("GEMINI_MODEL"),
+    )
+    if config:
+        app.config.update(config)
+    if not app.config["SECRET_KEY"]:
+        raise RuntimeError("Set FLASK_SECRET_KEY to a random secret before starting the server.")
+    init_database(app)
+    app.register_blueprint(user_bp, url_prefix="/api")
+    app.register_blueprint(chat_bp, url_prefix="/api")
+
+    @app.before_request
+    def protect_writes():
+        if request.path.startswith("/api/") and request.method in {"POST", "PUT", "PATCH", "DELETE"}:
+            expected = session.get("csrf_token", "")
+            actual = request.headers.get("X-CSRF-Token", "")
+            if not expected or not secrets.compare_digest(expected, actual):
+                return jsonify(error="세션이 만료되었습니다. 다시 시도해주세요."), 403
+            if not request.is_json:
+                return jsonify(error="JSON 요청이 필요합니다."), 415
+
+    @app.teardown_appcontext
+    def close_database(_error):
+        db = g.pop("db", None)
+        if db is not None:
+            db.close()
+
+    @app.errorhandler(SQLAlchemyError)
+    def database_error(_error):
+        if "db" in g:
+            g.db.rollback()
+        app.logger.error("Database operation failed")
+        return jsonify(error="저장 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요."), 500
+
+    @app.errorhandler(HTTPException)
+    def http_error(error):
+        if request.path.startswith("/api/"):
+            return jsonify(error=error.description), error.code
+        return error
+
+    @app.get("/")
+    def index():
+        return app.send_static_file("index.html")
+
+    @app.cli.command("migrate-passwords")
+    def migrate_passwords():
+        """Widen the legacy password column and hash all plaintext passwords."""
+        from backend.db_config import migrate_passwords as migrate
+        click.echo(f"Migrated {migrate(app)} legacy password(s).")
+
+    return app
 
 
-# @app.after_request
-# def after_request(response):
-#     response.headers.add('Access-Control-Allow-Origin', 'http://127.0.0.1:5173')
-#     response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
-#     response.headers.add('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
-#     response.headers.add('Access-Control-Allow-Credentials', 'true')
-#     return response
-
-
-# ✅ 서버 실행: 반드시 host는 'localhost'!
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=80, debug=True)
+if __name__ == "__main__":
+    create_app().run(host="127.0.0.1", port=int(os.environ.get("PORT", "5000")), debug=False)

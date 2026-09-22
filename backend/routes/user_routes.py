@@ -1,101 +1,113 @@
-# backend/routes/user_routes.py
+import math
+import re
+import secrets
 
-# Flask에서 API를 만들기 위한 도구들 불러오기
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, jsonify, request, session
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
+from werkzeug.security import check_password_hash, generate_password_hash
 
-# 우리가 만든 User 테이블 구조와 DB 연결 세션 불러오기
-from models.user_model import User
-from db_config import SessionLocal
+from backend.db_config import get_db, is_password_hash
+from backend.models.user_model import Score, User
 
-from flask_cors import cross_origin  # 🔥 이거 파일 맨 위에 추가해줘!
-
-from sqlalchemy import asc  # 최상단 import에 추가
+user_bp = Blueprint("user", __name__)
+RULES_VERSION = 2
 
 
-# Blueprint: 여러 API들을 하나로 묶는 Flask 기능
-user_bp = Blueprint('user', __name__)
+def json_body():
+    data = request.get_json(silent=True)
+    return data if isinstance(data, dict) else {}
 
-# 🔸 [POST] 점수 저장 API
-@user_bp.route('/score', methods=['POST'])
-def submit_score():
-    data = request.get_json()  # 프론트에서 보낸 JSON 데이터 받기
-    user_id = data.get('user_id')  # 로그인한 사용자 ID
-    score = data.get('score')      # 게임 끝나고 얻은 점수
 
-    db = SessionLocal()  # DB 연결 세션 만들기
+def current_user():
+    uid = session.get("uid")
+    return get_db().get(User, uid) if isinstance(uid, int) else None
 
-    # 이미 user_id가 존재하는지 확인
-    user = db.query(User).filter_by(user_id=user_id).first()
 
+def rotate_session(user=None):
+    session.clear()
+    session["csrf_token"] = secrets.token_urlsafe(32)
+    session.permanent = True
     if user:
-        user.score = score  # 기존 사용자면 점수 업데이트
-    else:
-        user = User(user_id=user_id, score=score)  # 없으면 새로 생성
-        db.add(user)  # DB에 추가
-
-    db.commit()  # 저장
-    return jsonify({'message': 'Score recorded'})  # 응답 메시지
+        session["uid"] = user.id
+    return session["csrf_token"]
 
 
+@user_bp.get("/session")
+def get_session():
+    if "csrf_token" not in session:
+        session["csrf_token"] = secrets.token_urlsafe(32)
+    user = current_user()
+    return jsonify(csrf_token=session["csrf_token"], logged_in=user is not None,
+                   nickname=user.nickname if user else None)
 
 
-# 🔸 [GET] 전체 사용자 랭킹 조회 API
-@user_bp.route('/ranking', methods=['GET'])
-@cross_origin()
-def get_ranking():
-    db = SessionLocal()
-    users = db.query(User)\
-              .filter(User.score > 0)\
-              .order_by(asc(User.score))\
-              .all()
-
-    ranking = [{'user_id': u.user_id, 'score': u.score} for u in users]
-    return jsonify(ranking)
-
-
-# 기존 코드들과 함께...
-
-# 🔹 로그인 API 추가
-@user_bp.route('/login', methods=['POST'])  # ✅ OPTIONS 추가!
-# @cross_origin(origin='http://127.0.0.1:5173', supports_credentials=True)  # ✅ CORS 허용!
-def login_user():
-
-
-    data = request.get_json()
-    user_id = data.get('user_id')
-    password = data.get('password')
-
-    db = SessionLocal()
-    user = db.query(User).filter_by(user_id=user_id).first()
-
-    if user and user.password == password:
-        return jsonify({'success': True})
-    else:
-        return jsonify({'success': False, 'error': 'ID 또는 비밀번호가 일치하지 않습니다'}), 401
-
-
-
-# 🔹 회원가입 API 추가
-@user_bp.route('/register', methods=['POST'])  # ← 여기 핵심!
+@user_bp.post("/register")
 def register_user():
-    data = request.get_json()
-    user_id = data.get('user_id')
-    password = data.get('password')
-    nickname = data.get('nickname')
+    data = json_body()
+    user_id, password, nickname = (data.get(key) for key in ("user_id", "password", "nickname"))
+    if not isinstance(user_id, str) or not re.fullmatch(r"[A-Za-z0-9_-]{3,50}", user_id):
+        return jsonify(error="아이디는 영문·숫자·밑줄·하이픈 3~50자로 입력해주세요."), 400
+    if not isinstance(password, str) or not 8 <= len(password) <= 128:
+        return jsonify(error="비밀번호는 8~128자로 입력해주세요."), 400
+    if not isinstance(nickname, str) or not 1 <= len(nickname.strip()) <= 50:
+        return jsonify(error="닉네임은 1~50자로 입력해주세요."), 400
+    db = get_db()
+    if db.scalar(select(User).where(User.user_id == user_id)):
+        return jsonify(error="이미 존재하는 아이디입니다."), 409
+    db.add(User(user_id=user_id, password=generate_password_hash(password), nickname=nickname.strip()))
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        return jsonify(error="이미 존재하는 아이디입니다."), 409
+    return jsonify(message="회원가입 성공!"), 201
 
-    db = SessionLocal()
 
-    # user_id 중복 검사
-    existing_user = db.query(User).filter_by(user_id=user_id).first()
-    if existing_user:
-        return jsonify({'error': '이미 존재하는 아이디입니다'}), 400
+@user_bp.post("/login")
+def login_user():
+    data = json_body()
+    user_id, password = data.get("user_id"), data.get("password")
+    if not isinstance(user_id, str) or not isinstance(password, str) or len(password) > 128:
+        return jsonify(success=False, error="아이디와 비밀번호를 확인해주세요."), 400
+    user = get_db().scalar(select(User).where(User.user_id == user_id))
+    if not user or not is_password_hash(user.password) or not check_password_hash(user.password, password):
+        return jsonify(success=False, error="아이디 또는 비밀번호가 일치하지 않습니다."), 401
+    token = rotate_session(user)
+    return jsonify(success=True, csrf_token=token)
 
-    # 새 유저 생성
-    new_user = User(user_id=user_id, password=password, nickname=nickname, score=0)
-    db.add(new_user)
+
+@user_bp.post("/logout")
+def logout_user():
+    return jsonify(success=True, csrf_token=rotate_session())
+
+
+@user_bp.post("/score")
+def submit_score():
+    user = current_user()
+    if user is None:
+        return jsonify(error="로그인이 필요합니다."), 401
+    data = json_body()
+    seconds = data.get("score")
+    if (type(seconds) not in (int, float) or not math.isfinite(seconds)
+            or not 0 < seconds <= 300 or data.get("rules_version") != RULES_VERSION):
+        return jsonify(error="올바른 현재 버전의 클리어 기록이 필요합니다."), 400
+    # Identity comes exclusively from the signed session, never the request body.
+    db = get_db()
+    db.scalar(select(User).where(User.id == user.id).with_for_update())
+    score = db.scalar(select(Score).where(Score.user_id == user.id, Score.rules_version == RULES_VERSION))
+    if score is None:
+        score = Score(user_id=user.id, rules_version=RULES_VERSION, seconds=seconds)
+        db.add(score)
+    else:
+        score.seconds = min(score.seconds, seconds)
     db.commit()
-
-    return jsonify({'message': '회원가입 성공!'})
-
+    return jsonify(message="기록을 저장했습니다.", best_score=score.seconds)
 
 
+@user_bp.get("/ranking")
+def get_ranking():
+    rows = get_db().execute(select(User.nickname, Score.seconds).join(Score, User.id == Score.user_id)
+                           .where(Score.rules_version == RULES_VERSION)
+                           .order_by(Score.seconds, Score.id).limit(10))
+    return jsonify([{"nickname": nickname or "익명", "score": seconds} for nickname, seconds in rows])

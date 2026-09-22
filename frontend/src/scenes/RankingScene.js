@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { GUEST_MODE } from '../services/gameMode.js';
 import { loadGuestRecords } from '../services/guestGame.js';
+import { apiRequest } from '../services/api.js';
 export default class RankingScene extends Phaser.Scene {
   constructor() {
     super({ key: 'RankingScene' });
@@ -20,7 +21,7 @@ export default class RankingScene extends Phaser.Scene {
     // 🧠 랭킹 데이터를 서버에서 불러오기
     const records = GUEST_MODE
       ? Promise.resolve(loadGuestRecords().map(record => ({ ...record, nickname: '게스트' })))
-      : fetch('/api/ranking').then(res => res.json());
+      : apiRequest('/ranking');
     if (GUEST_MODE) {
       this.add.text(width / 2, 85, '이 브라우저에 저장된 클리어 기록 · 빠른 순서', {
         fontSize: '16px', fill: '#aaaaaa',
@@ -28,6 +29,7 @@ export default class RankingScene extends Phaser.Scene {
     }
     records
       .then(ranking => {
+        if (!this.sys.isActive()) return;
         if (!Array.isArray(ranking)) {
           throw new Error('랭킹 데이터가 배열이 아님');
         }
@@ -51,6 +53,7 @@ export default class RankingScene extends Phaser.Scene {
         });
       })
       .catch(err => {
+        if (!this.sys.isActive()) return;
         console.error('❌ 랭킹 로딩 실패:', err);
         this.add.text(width / 2, 200, '랭킹 정보를 불러올 수 없습니다 😥', {
           fontSize: '20px',

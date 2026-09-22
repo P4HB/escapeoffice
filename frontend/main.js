@@ -9,12 +9,11 @@ import RankingScene from './src/scenes/RankingScene.js';
 import BootScene from './src/scenes/BootScene.js';
 import HowToPlayScene from './src/scenes/HowToPlayScene.js';
 import WeaponEncyclopediaScene from './src/scenes/WeaponEncyclopediaScene.js';
-import RexOutlinePipelinePlugin from 'phaser3-rex-plugins/plugins/outlinepipeline-plugin.js';
 
 const config = {
   type: Phaser.AUTO,
-  width: window.innerWidth,
-  height: window.innerHeight,
+  width: 1280,
+  height: 720,
   backgroundColor: '#1d1d1d',
 
   // ✅ 1. DOM 컨테이너를 지정합니다. (index.html의 div id와 동일)
@@ -37,17 +36,8 @@ const config = {
       debug: false
     }
   },
-  plugins: {
-    global: [
-      {
-        key: 'rexOutlinePipeline',
-        plugin: RexOutlinePipelinePlugin,
-        start: true
-      }
-    ]
-  },
   scene: [BootScene, LoginScene, HowToPlayScene, WeaponEncyclopediaScene, MenuScene, GameScene, ClearScene, GameOverScene, RegisterScene, RankingScene]
 };
 
-new Phaser.Game(config);
+export const game = new Phaser.Game(config);
 

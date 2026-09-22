@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { GUEST_MODE, assetUrl } from '../services/gameMode.js';
+import { apiRequest } from '../services/api.js';
 export default class MenuScene extends Phaser.Scene {
   constructor() {
     super({ key: 'MenuScene' });
@@ -87,10 +88,11 @@ export default class MenuScene extends Phaser.Scene {
       ...(!GUEST_MODE ? [{
         label: '[🚪 로그아웃]',
         color: '#ff5555',
-        onClick: () => {
-          localStorage.removeItem('user_id');
-          alert('로그아웃 되었습니다!');
-          this.scene.start('LoginScene');
+        onClick: async () => {
+          try {
+            await apiRequest('/logout', { method: 'POST', body: {} });
+            this.scene.start('LoginScene');
+          } catch (error) { alert(error.message); }
         }
       }] : [])
     ];

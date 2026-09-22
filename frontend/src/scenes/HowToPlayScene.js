@@ -1,63 +1,25 @@
+import { GAME, MONSTERS, bossStats } from '../config/balance.js';
 export default class HowToPlayScene extends Phaser.Scene {
-    constructor() {
-      super({ key: 'HowToPlayScene' });
-    }
-  
-    create() {
-      const { width, height } = this.scale;
-  
-      // 배경
-      this.add.rectangle(0, 0, width, height, 0x000000, 0.85)
-        .setOrigin(0)
-        .setScrollFactor(0);
-  
-      // 제목
-      this.add.text(width / 2, 40, '❓ 게임 설명', {
-        fontSize: '28px',
-        fill: '#ffff00',
-        fontFamily: 'Arial Black',
-        stroke: '#000000',
-        strokeThickness: 4
-      }).setOrigin(0.5);
-  
-      // 본문 텍스트
-      const instructions = `
-  당신은 몰입컴퍼니에 재직중입니다. 
-  당신의 목표는 5분안에 거래처 부장을 무찔러 몰입컴퍼니 사장님을 만족시키고 퇴근하는 것입니다.
-  현재 시간은 19시 00분입니다. 빨리 퇴근하세요!
-
-  맵을 돌아다니면서 퇴근을 도와줄 무기를 수집하세요!
-  무기를 이용해서 퇴근을 방해하는 업무와 직장 상사를 처리하세요!
-  업무를 처리했을 때 나오는 경험치로 레벨업해서 무기를 강화하세요!
-
-  업무와 직장상사와 닿지않도록 주의 하세요! 닿을시 퇴근시간이 10분씩 증가합니다.
-  퇴근시간이 20시 00분이 되면 당신은 퇴근할수 없습니다! 야근 확정입니다!
-  
-  레벨 15에 도달하여 거래처 김대리와 대화하세요!
-  김대리와의 대화가 끝나면 거래처 사장이 나타납니다. 그를 처치하세요!
-  김대리와의 대화 내용에 따라 거래처 사장의 기분이 달라집니다.
-  거래처 사장의 기분이 나쁠수록 거래처 사장은 더 강력해집니다!
-      `;
-  
-      const howToText = this.add.text(width / 2, 100, instructions, {
-        fontSize: '18px',
-        fill: '#ffffff',
-        fontFamily: 'Arial',
-        wordWrap: { width: width - 100 },
-        align: 'left'
-      }).setOrigin(0.5, 0);
-  
-      // [뒤로가기] 버튼
-      const backBtn = this.add.text(width / 2, height - 50, '[🔙 뒤로가기]', {
-        fontSize: '20px',
-        fill: '#00ffff',
-        fontFamily: 'Arial Black',
-        stroke: '#000000',
-        strokeThickness: 2
-      }).setOrigin(0.5).setInteractive();
-  
-      backBtn.on('pointerdown', () => {
-        this.scene.start('MenuScene');
-      });
-    }
+  constructor() { super({ key: 'HowToPlayScene' }); }
+  create() {
+    const { width, height } = this.scale;
+    this.add.text(width / 2, 50, '탈출 오피스 · 게임 설명', { fontSize: '30px', color: '#ffe477' }).setOrigin(0.5);
+    const instructions = [
+      `${GAME.durationSeconds / 60}분 안에 레벨 ${GAME.bossLevel}을 달성하고 거래처 사장을 처치하세요.`,
+      '방향키로 이동하고 자동으로 공격합니다. 대각선도 같은 속도로 이동합니다.',
+      `파일·보고서 접촉 +${MONSTERS.file.damage}분 / 과장 +${MONSTERS.gwajang.damage}분 / 부장 +${MONSTERS.boojang.damage}분`,
+      '퇴근 시간이 19:00에서 20:00이 되면 야근 확정입니다.',
+      `무기는 최대 ${GAME.maxWeapons}개, 각 ${GAME.maxWeaponLevel}레벨까지 강화합니다. ↑↓ / Enter 또는 클릭으로 선택하세요.`,
+      '경험치는 가까이 가면 끌려옵니다. 강한 적일수록 더 많은 경험치를 줍니다.',
+      `휴가신청서는 최대 ${GAME.maxItems}개 보관합니다. Space / Q / E로 각각 사용하세요.`,
+      `휴가신청서는 주변 일반 적을 ${GAME.itemDurationMs / 1000}초 멈춥니다. 보스에게는 효과가 없습니다.`,
+      `김대리에게 예의 바르게 말하면 보스 체력·접촉 피해가 줄어듭니다. 기본 피해는 +${bossStats().damage}분입니다.`,
+      '대화는 최대 10번입니다. “가볼게요” 또는 보스 만나기로 바로 진행할 수 있습니다.',
+      '강화·교체·대화·ESC 일시정지·다른 창으로 전환한 시간은 제한 시간과 기록에 포함되지 않습니다.',
+    ].join('\n\n');
+    this.add.text(90, 115, instructions, { fontSize: '19px', color: '#fff', wordWrap: { width: width - 180 } });
+    const back = this.add.text(width / 2, height - 35, '[뒤로가기]', { fontSize: '22px', color: '#aaddff' })
+      .setOrigin(0.5).setInteractive();
+    back.on('pointerdown', () => this.scene.start('MenuScene'));
   }
+}

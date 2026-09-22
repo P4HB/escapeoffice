@@ -40,3 +40,14 @@ test('scripted dialogue changes boss difficulty with bounded mood changes', () =
     assert.ok(Number.isInteger(reply.moodChange) && Math.abs(reply.moodChange) <= 10);
   }
 });
+
+test('balanced records never mix with demonstration results or invalid dates', () => {
+  const values = new Map([['escapeoffice.guest.records.v1', JSON.stringify([{ score: 1, playedAt: new Date().toISOString() }])]]);
+  const storage = { getItem: key => values.get(key), setItem: (key, value) => values.set(key, value) };
+  assert.deepEqual(loadGuestRecords(storage), []);
+  assert.equal(saveGuestRecord(180, storage), true);
+  assert.equal(saveGuestRecord(301, storage), false);
+  assert.equal(JSON.parse(values.get('escapeoffice.guest.records.v1'))[0].score, 1);
+  assert.equal(loadGuestRecords(storage)[0].score, 180);
+  assert.deepEqual(loadGuestRecords(memoryStorage('[{"score":10,"playedAt":"invalid"}]')), []);
+});

@@ -1,66 +1,28 @@
-// ClearScene.js
 import { GUEST_MODE } from '../services/gameMode.js';
 import { saveGuestRecord } from '../services/guestGame.js';
-export default class ClearScene extends Phaser.Scene {
-  constructor() {
-    super({ key: 'ClearScene' });
-  }
+import { apiRequest } from '../services/api.js';
+import { RULES_VERSION } from '../config/balance.js';
 
+export default class ClearScene extends Phaser.Scene {
+  constructor() { super({ key: 'ClearScene' }); }
   create(data) {
     const { width, height } = this.scale;
-
-    const totalTime = data.clearTime || 0;
-    const minutes = Math.floor(totalTime / 60);
-    const seconds = Math.floor(totalTime % 60);
-
-    this.add.text(width / 2, height / 2 - 100, '🎉 퇴근 성공!! 🎉', {
-      fontSize: '36px',
-      fill: '#00ff00',
-      fontFamily: 'Arial',
-    }).setOrigin(0.5);
-
-    // ✅ 시간 표시 텍스트
-    this.add.text(width / 2, height / 2 - 40, `총 소요 시간: ${minutes}분 ${seconds}초`, {
-      fontSize: '24px',
-      fill: '#ffffff',
-      fontFamily: 'Arial',
-    }).setOrigin(0.5);
-
-    this.add.text(width / 2, height / 2 + 20, '[스페이스바] 눌러서 다시 시작하기', {
-      fontSize: '20px',
-      fill: '#ffffff',
-    }).setOrigin(0.5);
-
-    console.log('서버로 보내는 점수:', totalTime);
-
-
+    const totalTime = data.clearTime;
+    this.add.text(width / 2, height / 2 - 100, '퇴근 성공!', { fontSize: '40px', color: '#77ff99' }).setOrigin(0.5);
+    this.add.text(width / 2, height / 2 - 35,
+      `전투 시간: ${Math.floor(totalTime / 60)}분 ${(totalTime % 60).toFixed(1)}초`,
+      { fontSize: '24px', color: '#fff' }).setOrigin(0.5);
+    const status = this.add.text(width / 2, height / 2 + 20, '', { fontSize: '18px', color: '#ccc' }).setOrigin(0.5);
     if (GUEST_MODE) {
-      const saved = saveGuestRecord(totalTime);
-      this.add.text(width / 2, height / 2 + 65,
-        saved ? '이 브라우저에 기록을 저장했습니다. 메뉴의 내 기록에서 확인하세요.' : '기록을 저장할 수 없습니다. 브라우저 저장 공간 설정을 확인해주세요.',
-        { fontSize: '16px', fill: '#cccccc' }).setOrigin(0.5);
+      status.setText(saveGuestRecord(totalTime) ? '이 브라우저에 기록을 저장했습니다.' : '브라우저 저장 공간에 기록을 저장하지 못했습니다.');
     } else {
-  // ✅ 점수 서버로 전송
-      fetch('/api/score', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        user_id: localStorage.getItem('user_id'),  // 또는 this.registry.get('user_id')
-        score: totalTime
-      })
-    })
-    .then(res => res.json())
-    .then(data => console.log('✅ 점수 저장 완료:', data))
-    .catch(err => console.error('❌ 점수 저장 실패:', err));
+      status.setText('기록을 저장하고 있습니다…');
+      apiRequest('/score', { method: 'POST', body: { score: totalTime, rules_version: RULES_VERSION } })
+        .then(() => { if (this.sys.isActive()) status.setText('개인 최고 기록을 저장했습니다.'); })
+        .catch(error => { if (this.sys.isActive()) status.setText(error.message); });
     }
-
-
-
-
-      // ✅ 다시 시작 키 입력
-
-    this.input.keyboard.once('keydown-SPACE', () => {
-      this.scene.start('MenuScene');
-    });
+    this.add.text(width / 2, height / 2 + 90, '[스페이스바] 메뉴로 돌아가기',
+      { fontSize: '20px', color: '#fff' }).setOrigin(0.5);
+    this.input.keyboard.once('keydown-SPACE', () => this.scene.start('MenuScene'));
   }
 }

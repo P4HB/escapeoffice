@@ -12,14 +12,14 @@ test('upgrades freeze the clock, queue levels, and restart cleans input', async 
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
   await start(page);
-  const pausedAt = await page.evaluate(async () => {
+  await page.evaluate(async () => {
     const s = window.testGame.scene.getScene('GameScene');
     s.player.gainExp(160);
-    return s.run.elapsedMs;
   });
   await page.waitForFunction(() => !!window.testGame.scene.getScene('GameScene').weaponUpgradeModalInstance);
+  const pausedAt = await page.evaluate(() => window.testGame.scene.getScene('GameScene').run.elapsedMs);
   await page.waitForTimeout(300);
-  expect(await page.evaluate(async () => window.testGame.scene.getScene('GameScene').run.elapsedMs)).toBeLessThan(pausedAt + 50);
+  expect(await page.evaluate(async () => window.testGame.scene.getScene('GameScene').run.elapsedMs)).toBe(pausedAt);
   await page.keyboard.press('Enter');
   await page.waitForFunction(() => !!window.testGame.scene.getScene('GameScene').weaponUpgradeModalInstance);
   await page.keyboard.press('Enter');
